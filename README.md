@@ -4,9 +4,8 @@
 Urban traffic networks face sudden, severe congestion from planned and unplanned events, yet traditional traffic models often rely on high-precision predictions that fail on rare or low-sample incidents. This system aggregates historical traffic incident data to predict the impact of upcoming events and recommend police resource deployments. By utilizing structured fallbacks and prioritizing explainable metrics, the planner helps traffic authorities make robust, defensible deployment decisions even with sparse baseline data.
 
 ## 2. Architecture Overview
-```text
-Data Cleaning -> Historical Aggregation -> Impact Prediction -> Resource Recommendation -> Dashboard -> Feedback Loop
-```
+<img width="1693" height="929" alt="image" src="https://github.com/user-attachments/assets/dbb61cb7-40f6-449b-98e5-dac2cf3f9400" />
+
 * **Data Cleaning ([data_cleaning.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/data_cleaning.py))**: Cleans raw event logs, applies type-specific duration caps (24 hours for unplanned events, 30 days for planned events), and flags rows without valid durations for partial categorical analysis.
 * **Historical Aggregation ([feature_engineering.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/feature_engineering.py))**: Groups cleaned events by spatial, temporal, and cause features, computing closure rates and duration statistics at fine and coarse resolution tiers.
 * **Impact Prediction ([impact_model.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/impact_model.py))**: Cascades through historical levels to estimate event duration and road closure probability for an upcoming event, returning structured confidence labels.
