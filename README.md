@@ -1,94 +1,46 @@
-# Gridlock — Event-Driven Congestion Forecasting for Bengaluru Traffic Police
+# BTP Event-Driven Congestion Planner
 
-A lightweight, explainable decision-support system for the Bengaluru Traffic Police (BTP) that predicts traffic impact from planned and unplanned road events and generates actionable deployment recommendations — grounded entirely in real historical ASTRAM data.
+## 1. Problem Statement
+Urban traffic networks face sudden, severe congestion from planned and unplanned events, yet traditional traffic models often rely on high-precision predictions that fail on rare or low-sample incidents. This system aggregates historical traffic incident data to predict the impact of upcoming events and recommend police resource deployments. By utilizing structured fallbacks and prioritizing explainable metrics, the planner helps traffic authorities make robust, defensible deployment decisions even with sparse baseline data.
 
----
-
-## Problem
-
-Bengaluru's traffic police respond to hundreds of road events daily: vehicle breakdowns, construction, VIP movements, protests, waterlogging, and more. Response quality depends on how quickly officers can answer three questions:
-
-1. How long will this disrupt traffic?
-2. Will a road closure be needed?
-3. How many officers and barricades should we deploy?
-
-Today, those decisions rely on individual officer experience and are not systematically informed by past event data. This system changes that.
-
----
-
-## Solution Overview
-
-The pipeline has four stages:
-
-| Stage | File | Description |
-|---|---|---|
-| Data Cleaning | `src/data_cleaning.py` | Cleans ASTRAM logs, fixes datetime issues, computes duration |
-| Feature Engineering | `src/feature_engineering.py` | Builds historical lookup table from cleaned events |
-| Impact Model | `src/impact_model.py` | Predicts severity, duration, and road closure probability |
-| Resource Engine | `src/resource_engine.py` | Converts impact into a deployment recommendation |
-| Dashboard | `app/dashboard.py` | Streamlit UI for officers to query the system |
-
----
-
-## Running the Dashboard
-
-From the project root:
-
-```bash
-py -m streamlit run app/dashboard.py
+## 2. Architecture Overview
+```text
+Data Cleaning -> Historical Aggregation -> Impact Prediction -> Resource Recommendation -> Dashboard -> Feedback Loop
 ```
+* **Data Cleaning ([data_cleaning.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/data_cleaning.py))**: Cleans raw event logs, applies type-specific duration caps (24 hours for unplanned events, 30 days for planned events), and flags rows without valid durations for partial categorical analysis.
+* **Historical Aggregation ([feature_engineering.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/feature_engineering.py))**: Groups cleaned events by spatial, temporal, and cause features, computing closure rates and duration statistics at fine and coarse resolution tiers.
+* **Impact Prediction ([impact_model.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/impact_model.py))**: Cascades through historical levels to estimate event duration and road closure probability for an upcoming event, returning structured confidence labels.
+* **Resource Recommendation ([resource_engine.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/resource_engine.py))**: Translates predicted severity and closure likelihood into personnel counts, barricade placements, and diversion route suggestions using editable configurations.
+* **Dashboard ([dashboard.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/app/dashboard.py))**: Provides an interactive Streamlit interface for traffic managers to submit new events, inspect recommendations, view explainability flags, and review historical evidence.
+* **Feedback Loop ([feedback_loop.py](file:///c:/Users/thera/Downloads/flipkart_Gridlock/src/feedback_loop.py))**: Captures real-world event outcomes from officers on the ground and appends them to the cleaned baseline dataset to continuously refine predictions.
 
-Requires: `streamlit`, `pandas` (and their dependencies). Processed data files must exist at `data/processed/`. If not, run `src/data_cleaning.py` then `src/feature_engineering.py` first.
+## 3. Key Design Philosophy: Explainability over False Precision
+Rather than forcing a complex machine learning model to output potentially inaccurate numbers when data is scarce, this project prioritizes **explainable, rule-based reasoning and structured fallback mechanisms**.
 
----
+* **4-Tier Fallback Mechanism**: To ensure the system always provides a useful prediction instead of returning an error on new or rare scenarios, the lookup cascades through:
+  1. `fine`: Exact match on corridor + event cause + weekend status + hour bucket (requires $\ge$ 5 historical events).
+  2. `coarse`: Match on event cause + weekend status + hour bucket (ignores specific corridor).
+  3. `cause_only`: Match solely on event cause (ignores time and location).
+  4. `no_data`: Default baseline fallback when no historical record of the event cause exists.
 
-## How It Works
+* **Closure-Rate-Priority Override**: In low-sample categories (specifically the `cause_only` tier with $< 5$ samples), duration estimates are often skewed by administrative lag (e.g., a short VIP movement marked as completed days late in the database). Under this override, the model ignores the unreliable duration statistics and instead determines severity based on the historical road closure rate and the event's native priority.
+  * *Example (VIP Movement)*: A VIP movement might show an average duration of 6 days in historical logs due to administrative cleanup delays. Instead of outputting a false "High Severity" based on this duration, the override detects the low sample size, evaluates the high closure rate and high native priority, and correctly classifies the event under a rule-based logic that triggers a structured, moderate-severity personnel deployment.
 
-### Fallback Hierarchy
+## 4. How to Run
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Start the interactive dashboard:
+   ```bash
+   streamlit run app/dashboard.py
+   ```
 
-The system never fabricates data. When historical coverage is thin, it falls back gracefully rather than projecting an unreliable number with false confidence:
+## 5. Known Limitations
+* **Routine vs. High-Security Deployments**: Personnel recommendations are calibrated from routine traffic management responses. They do not reflect high-security VIP protocols (such as SPG or specialized security convoys), which follow independent force-deployment chains. This system is designed to augment, not replace, those processes for VIP-classified events.
+* **Corridor-Level Diversions**: Diversion suggestions are corridor-level hints rather than precise road-network routing. This is due to a lack of live network topology and real-time congestion data within the current dataset.
 
-1. **Fine match** — exact corridor + cause + time-of-day + weekend flag
-2. **Coarse match** — city-wide cause + time-of-day + weekend flag (corridor dropped)
-3. **Cause-only** — all historical events of this type, regardless of time or location
-4. **No data** — honest "Insufficient data — defer to officer judgment"
-
-Every prediction shown to an officer states which tier it came from and how many historical events back it up.
-
-### Severity Scoring
-
-- **When sample is reliable (≥ 5 duration records):** severity is driven by historical median duration.
-- **When sample is thin:** severity is driven by historical road-closure rate and event priority instead. Raw duration figures are shown in a muted style with a `(low reliability)` flag so they are not mistaken for confident estimates. This design specifically prevents administrative-lag outliers (e.g., a VIP event marked "closed" 12 days after the road actually cleared) from producing misleading severity projections.
-
----
-
-## Known Limitations & Scope
-
-### Personnel Recommendations and VIP Events
-
-Personnel recommendations are calibrated from **routine traffic-management response**, not high-security VIP protocols, which follow separate force-deployment chains (SPG/escort-driven coordination outside the ASTRAM event-logging system). This system augments, not replaces, that process for VIP-classified events.
-
-In practice, for `vip_movement` events, officers should treat the personnel count as the *traffic-management component* of the response only, and coordinate the security component through the appropriate protocol channels independently.
-
-### Diversion Routes
-
-The system does not have access to a live road-network graph. Diversion suggestions are corridor-aware hints based on BTP's established Standard Diversion Plans, not dynamically computed routes. Officers should validate suggestions against current conditions.
-
-### Duration Reliability
-
-Only ~38% of historical ASTRAM records have a computable duration (i.e., a resolved or closed timestamp). Duration estimates are always displayed alongside the number of records they are based on. Treat low-count estimates as directional guidance rather than precise forecasts.
-
----
-
-## Data
-
-Source: BTP ASTRAM traffic event logs (~8,173 rows). After cleaning: **7,331 events** retained. See `docs/context.md` for full schema documentation and data quality notes.
-
----
-
-## Design Principles
-
-- **Explainable by default.** Every output says "based on N historical events" and names the match tier. No black-box scores.
-- **Config-driven thresholds.** Severity cutoffs, personnel counts, and barricade probability thresholds are named constants in each source file — editable without touching logic.
-- **Honest about uncertainty.** Low-reliability signals are labelled as such in the UI. Missing data is never silently imputed in a way that inflates confidence.
-- **Lightweight stack.** Python + pandas + Streamlit. No cloud-only dependencies, no GPU requirement, deployable on a station laptop.
+## 6. Future Work
+* **Live ASTRAM Feed Integration**: Automate real-time event ingestion by streaming active incidents directly from the ASTRAM control room API.
+* **Automated Feedback Retraining**: Set up a pipeline to automatically re-run feature engineering and rebuild the lookup tables whenever new feedback entries are logged.
+* **Road-Network-Aware Routing**: Integrate open routing services (e.g., OSRM) to compute dynamic diversion routes based on active street networks and live congestion bottlenecks.
