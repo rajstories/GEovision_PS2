@@ -46,11 +46,8 @@ Urban traffic networks face sudden, severe congestion from planned and unplanned
 
 A four-stage pipeline that takes a real BTP traffic-event log, learns how different event types historically behave, and turns that into a live, explainable recommendation tool for traffic officers — with a continuous feedback loop so it improves over time.
 
-```
-New Event Input  →  Historical Match  →  Impact Forecast  →  Resource Recommendation  →  Officer Dashboard
-                                                                       ↑                          │
-                                                                       └────── Feedback Loop ◄────┘
-```
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/5a30dedd-0cbc-422d-a6a7-af7da43449db" />
+
 
 ## 🏗️ Architecture Overview
 
