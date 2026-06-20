@@ -12,6 +12,7 @@ if src_path not in sys.path:
 from impact_model import predict_impact
 from resource_engine import generate_recommendation
 from feedback_loop import log_actual_outcome
+from advisory_generator import generate_traffic_advisory
 
 # Page configuration
 st.set_page_config(
@@ -306,6 +307,39 @@ if data_loaded_successfully:
             # 5. Full rationale text from resource_engine in expandable section
             with st.expander("Why this recommendation?", expanded=False):
                 st.write(rec.rationale)
+                
+            # 5.5 Draft Public Traffic Advisory
+            advisory_text = generate_traffic_advisory(
+                event_cause=event_cause,
+                planned_start_datetime=planned_start_datetime,
+                corridor=corridor,
+                requires_road_closure=requires_road_closure,
+                impact=impact,
+                rec=rec,
+                cleaned_df=cleaned_df
+            )
+            
+            st.markdown("### Draft Public Traffic Advisory")
+            st.text_area(
+                "Copy and edit this advisory for public posting:",
+                value=advisory_text,
+                height=280,
+                key="advisory_draft_area"
+            )
+            
+            # File download name
+            file_date = planned_start_datetime.strftime("%Y%m%d")
+            file_cause = event_cause.replace("_", "")
+            download_filename = f"traffic_advisory_{file_date}_{file_cause}.txt"
+            
+            st.download_button(
+                label="Export as .txt",
+                data=advisory_text,
+                file_name=download_filename,
+                mime="text/plain"
+            )
+            
+            st.markdown("<br>", unsafe_allow_html=True)
                 
             # 6. Historical evidence events table
             # Filter cleaned_df by event_cause and corridor (if not None/Unknown)
