@@ -1,0 +1,225 @@
+corridor,event_cause,is_weekend,hour_bucket,event_count,road_closure_rate,priority_mode,duration_count,mean_duration_minutes,median_duration_minutes,match_level
+Airport New South Road,construction,False,night,5,0.0,High,5.0,733.21,419.07,fine
+Airport New South Road,construction,True,night,5,0.0,High,5.0,1430.43,1440.08,fine
+Bannerghata Road,vehicle_breakdown,False,afternoon,12,0.0833,High,6.0,42.83,32.83,fine
+Bannerghata Road,vehicle_breakdown,False,morning,20,0.0,High,7.0,50.63,22.18,fine
+Bannerghata Road,vehicle_breakdown,False,night,29,0.0,High,8.0,50.14,40.68,fine
+Bannerghata Road,vehicle_breakdown,True,morning,12,0.0,High,5.0,63.44,61.73,fine
+Bellary Road 1,others,False,morning,10,0.2,High,6.0,350.59,111.43,fine
+Bellary Road 1,others,True,morning,8,0.0,High,6.0,256.46,25.1,fine
+Bellary Road 1,vehicle_breakdown,False,afternoon,61,0.0164,High,12.0,30.17,24.02,fine
+Bellary Road 1,vehicle_breakdown,False,morning,125,0.024,High,50.0,59.2,50.35,fine
+Bellary Road 1,vehicle_breakdown,False,night,119,0.0168,High,35.0,39.86,26.02,fine
+Bellary Road 1,vehicle_breakdown,True,afternoon,21,0.0,High,11.0,68.03,74.98,fine
+Bellary Road 1,vehicle_breakdown,True,morning,54,0.0,High,13.0,53.5,46.94,fine
+Bellary Road 1,vehicle_breakdown,True,night,61,0.0656,High,20.0,57.25,39.9,fine
+Bellary Road 2,accident,False,morning,12,0.0,High,6.0,23.07,19.49,fine
+Bellary Road 2,accident,False,night,8,0.0,High,5.0,42.5,38.39,fine
+Bellary Road 2,construction,False,morning,7,0.1429,High,6.0,43.93,24.83,fine
+Bellary Road 2,vehicle_breakdown,False,afternoon,28,0.0357,High,10.0,59.47,46.63,fine
+Bellary Road 2,vehicle_breakdown,False,morning,54,0.0185,High,18.0,47.41,40.02,fine
+Bellary Road 2,vehicle_breakdown,False,night,85,0.0235,High,22.0,59.68,53.22,fine
+Bellary Road 2,vehicle_breakdown,True,afternoon,24,0.0,High,5.0,56.97,57.2,fine
+Bellary Road 2,vehicle_breakdown,True,morning,34,0.0,High,15.0,41.69,41.04,fine
+Bellary Road 2,vehicle_breakdown,True,night,34,0.0294,High,8.0,61.04,65.5,fine
+CBD 2,vehicle_breakdown,False,morning,14,0.0714,High,7.0,49.51,52.07,fine
+CBD 2,vehicle_breakdown,False,night,17,0.0,High,6.0,56.07,63.03,fine
+CBD 2,vehicle_breakdown,True,morning,7,0.0,High,5.0,63.77,60.08,fine
+Hennur Main Road,vehicle_breakdown,False,morning,14,0.0,High,5.0,58.5,56.31,fine
+Hosur Road,accident,False,night,10,0.0,High,6.0,84.76,111.91,fine
+Hosur Road,vehicle_breakdown,False,afternoon,29,0.0,High,12.0,49.24,46.84,fine
+Hosur Road,vehicle_breakdown,False,morning,36,0.0833,High,18.0,67.42,62.48,fine
+Hosur Road,vehicle_breakdown,False,night,50,0.06,High,22.0,47.93,45.88,fine
+Hosur Road,vehicle_breakdown,True,morning,23,0.0,High,10.0,39.71,33.37,fine
+Hosur Road,vehicle_breakdown,True,night,18,0.0,High,5.0,77.92,88.4,fine
+IRR(Thanisandra road),vehicle_breakdown,False,morning,10,0.0,High,6.0,39.98,31.56,fine
+Magadi Road,others,False,morning,5,0.0,High,5.0,64.67,77.66,fine
+Magadi Road,others,True,morning,5,0.0,High,5.0,118.16,140.94,fine
+Magadi Road,vehicle_breakdown,False,afternoon,27,0.0,High,14.0,65.01,57.47,fine
+Magadi Road,vehicle_breakdown,False,morning,48,0.0208,High,24.0,50.18,48.28,fine
+Magadi Road,vehicle_breakdown,False,night,53,0.0189,High,15.0,52.29,35.65,fine
+Magadi Road,vehicle_breakdown,True,afternoon,8,0.0,High,5.0,20.79,17.29,fine
+Magadi Road,vehicle_breakdown,True,morning,23,0.0435,High,13.0,49.33,29.79,fine
+Mysore Road,others,False,morning,10,0.1,High,9.0,83.91,76.25,fine
+Mysore Road,others,False,night,16,0.125,High,9.0,79.96,63.24,fine
+Mysore Road,others,True,night,8,0.125,High,5.0,177.18,140.1,fine
+Mysore Road,vehicle_breakdown,False,afternoon,59,0.0339,High,27.0,46.05,35.98,fine
+Mysore Road,vehicle_breakdown,False,morning,160,0.0562,High,80.0,45.74,46.04,fine
+Mysore Road,vehicle_breakdown,False,night,176,0.0398,High,75.0,49.46,41.14,fine
+Mysore Road,vehicle_breakdown,True,afternoon,23,0.2174,High,8.0,46.94,33.3,fine
+Mysore Road,vehicle_breakdown,True,morning,66,0.0303,High,32.0,44.76,38.24,fine
+Mysore Road,vehicle_breakdown,True,night,70,0.1,High,20.0,42.6,36.64,fine
+Mysore Road,water_logging,False,morning,8,0.375,High,6.0,342.33,142.22,fine
+Mysore Road,water_logging,True,afternoon,9,0.5556,High,6.0,66.71,33.69,fine
+Non-corridor,accident,False,morning,32,0.0312,Low,9.0,55.17,42.89,fine
+Non-corridor,accident,False,night,83,0.012,Low,8.0,53.87,42.57,fine
+Non-corridor,accident,True,night,17,0.0588,Low,9.0,56.52,64.68,fine
+Non-corridor,construction,False,afternoon,11,0.1818,Low,7.0,1171.01,1080.75,fine
+Non-corridor,construction,False,morning,24,0.2917,Low,20.0,2081.49,197.59,fine
+Non-corridor,construction,False,night,40,0.275,Low,34.0,2115.89,268.44,fine
+Non-corridor,construction,True,morning,8,0.25,Low,6.0,1323.21,545.47,fine
+Non-corridor,construction,True,night,21,0.381,Low,16.0,9079.97,1050.77,fine
+Non-corridor,others,False,afternoon,29,0.1034,Low,12.0,203.83,25.19,fine
+Non-corridor,others,False,morning,47,0.1064,Low,26.0,130.01,56.08,fine
+Non-corridor,others,False,night,56,0.125,Low,26.0,186.79,59.19,fine
+Non-corridor,others,True,afternoon,13,0.1538,Low,7.0,306.33,43.93,fine
+Non-corridor,others,True,morning,18,0.0,Low,9.0,58.88,48.61,fine
+Non-corridor,others,True,night,24,0.0417,Low,12.0,217.44,68.79,fine
+Non-corridor,pot_holes,False,night,75,0.0,Low,14.0,108.33,15.94,fine
+Non-corridor,procession,False,morning,16,0.125,Low,8.0,2209.02,34.47,fine
+Non-corridor,procession,False,night,12,0.3333,Low,9.0,119.5,39.3,fine
+Non-corridor,public_event,False,afternoon,7,0.2857,Low,7.0,482.75,113.09,fine
+Non-corridor,tree_fall,False,afternoon,53,0.434,Low,24.0,467.55,171.7,fine
+Non-corridor,tree_fall,False,morning,20,0.55,Low,11.0,417.14,81.06,fine
+Non-corridor,tree_fall,False,night,33,0.4242,Low,16.0,188.84,78.52,fine
+Non-corridor,tree_fall,True,afternoon,16,0.5625,Low,6.0,118.94,63.61,fine
+Non-corridor,tree_fall,True,night,11,0.5455,Low,10.0,183.13,87.36,fine
+Non-corridor,vehicle_breakdown,False,afternoon,193,0.0829,Low,77.0,47.58,45.66,fine
+Non-corridor,vehicle_breakdown,False,evening,34,0.0294,Low,7.0,66.67,58.84,fine
+Non-corridor,vehicle_breakdown,False,morning,417,0.0647,Low,183.0,51.32,44.15,fine
+Non-corridor,vehicle_breakdown,False,night,504,0.0655,Low,173.0,55.1,45.66,fine
+Non-corridor,vehicle_breakdown,True,afternoon,90,0.0222,Low,28.0,59.02,51.89,fine
+Non-corridor,vehicle_breakdown,True,morning,176,0.0625,Low,72.0,53.89,39.6,fine
+Non-corridor,vehicle_breakdown,True,night,213,0.0657,Low,68.0,49.59,37.94,fine
+Non-corridor,water_logging,False,afternoon,48,0.0208,Low,15.0,288.65,70.98,fine
+Non-corridor,water_logging,False,morning,32,0.1875,Low,13.0,133.65,137.85,fine
+Non-corridor,water_logging,True,afternoon,21,0.0476,Low,8.0,667.89,791.75,fine
+ORR East 1,vehicle_breakdown,False,morning,32,0.0,High,15.0,59.94,66.1,fine
+ORR East 1,vehicle_breakdown,False,night,68,0.0588,High,24.0,48.55,38.39,fine
+ORR East 1,vehicle_breakdown,True,morning,13,0.0,High,6.0,209.3,71.31,fine
+ORR East 1,vehicle_breakdown,True,night,15,0.0,High,5.0,51.83,39.86,fine
+ORR East 2,construction,False,night,63,0.0,High,61.0,725.46,726.91,fine
+ORR East 2,construction,True,night,24,0.0,High,22.0,695.18,726.69,fine
+ORR East 2,vehicle_breakdown,False,morning,17,0.0,High,8.0,35.44,30.05,fine
+ORR East 2,vehicle_breakdown,False,night,18,0.0,High,5.0,55.17,42.2,fine
+ORR North 1,construction,False,night,11,0.3636,High,6.0,1800.57,421.77,fine
+ORR North 1,vehicle_breakdown,False,morning,46,0.0,High,14.0,50.26,35.19,fine
+ORR North 1,vehicle_breakdown,False,night,55,0.0364,High,10.0,48.1,39.77,fine
+ORR North 1,vehicle_breakdown,True,morning,13,0.0,High,6.0,55.05,51.48,fine
+ORR North 1,vehicle_breakdown,True,night,23,0.0435,High,9.0,49.78,28.24,fine
+ORR North 2,others,False,morning,5,0.0,High,5.0,31.13,15.64,fine
+ORR North 2,vehicle_breakdown,False,afternoon,11,0.0909,High,6.0,43.54,14.81,fine
+ORR North 2,vehicle_breakdown,False,evening,10,0.1,High,5.0,55.1,62.1,fine
+ORR North 2,vehicle_breakdown,False,morning,34,0.0588,High,8.0,49.82,25.53,fine
+ORR North 2,vehicle_breakdown,False,night,45,0.0667,High,12.0,62.04,59.2,fine
+ORR North 2,vehicle_breakdown,True,morning,18,0.0,High,9.0,49.76,24.98,fine
+ORR North 2,vehicle_breakdown,True,night,17,0.0588,High,7.0,50.38,49.33,fine
+ORR West 1,vehicle_breakdown,False,afternoon,8,0.0,High,5.0,37.84,38.3,fine
+ORR West 1,vehicle_breakdown,False,morning,29,0.0345,High,12.0,76.0,69.89,fine
+ORR West 1,vehicle_breakdown,False,night,34,0.0,High,15.0,50.43,39.58,fine
+ORR West 1,vehicle_breakdown,True,morning,18,0.0556,High,7.0,57.03,45.38,fine
+ORR West 1,vehicle_breakdown,True,night,11,0.0,High,7.0,56.11,72.53,fine
+Old Airport Road,public_event,True,evening,5,0.0,High,5.0,403.75,409.17,fine
+Old Airport Road,vehicle_breakdown,False,morning,13,0.0,High,6.0,70.51,67.16,fine
+Old Airport Road,vehicle_breakdown,False,night,12,0.0833,High,9.0,30.22,14.24,fine
+Old Madras Road,vehicle_breakdown,False,afternoon,20,0.0,High,5.0,18.36,18.5,fine
+Old Madras Road,vehicle_breakdown,False,morning,47,0.0426,High,9.0,41.79,35.65,fine
+Old Madras Road,vehicle_breakdown,False,night,59,0.0169,High,16.0,42.39,38.03,fine
+Old Madras Road,vehicle_breakdown,True,night,26,0.0,High,10.0,46.26,45.31,fine
+Tumkur Road,vehicle_breakdown,False,afternoon,39,0.0,High,17.0,29.81,21.83,fine
+Tumkur Road,vehicle_breakdown,False,morning,104,0.0192,High,43.0,44.22,34.96,fine
+Tumkur Road,vehicle_breakdown,False,night,125,0.024,High,63.0,43.74,29.78,fine
+Tumkur Road,vehicle_breakdown,True,afternoon,17,0.0588,High,10.0,34.39,25.92,fine
+Tumkur Road,vehicle_breakdown,True,morning,48,0.0,High,25.0,52.8,44.77,fine
+Tumkur Road,vehicle_breakdown,True,night,40,0.0,High,22.0,43.33,29.93,fine
+Varthur Road,vehicle_breakdown,False,morning,12,0.0833,High,8.0,54.82,41.86,fine
+Varthur Road,vehicle_breakdown,False,night,20,0.05,High,8.0,53.03,48.83,fine
+West of Chord Road,vehicle_breakdown,False,morning,26,0.0,High,7.0,50.85,44.19,fine
+West of Chord Road,vehicle_breakdown,False,night,35,0.0,High,12.0,32.67,25.68,fine
+West of Chord Road,vehicle_breakdown,True,night,18,0.0556,High,5.0,58.18,49.2,fine
+,Debris,False,morning,4,0.25,High,,,,coarse
+,Debris,False,night,2,0.0,High,,,,coarse
+,Debris,True,night,2,0.0,High,,,,coarse
+,Fog / Low Visibility,False,afternoon,1,0.0,High,,,,coarse
+,Fog / Low Visibility,False,morning,1,0.0,Low,,,,coarse
+,accident,False,afternoon,47,0.0638,Low,7.0,60.31,52.04,coarse
+,accident,False,evening,20,0.15,High,3.0,49.56,59.44,coarse
+,accident,False,morning,71,0.0141,High,23.0,41.95,31.81,coarse
+,accident,False,night,126,0.0079,Low,27.0,55.64,41.84,coarse
+,accident,True,afternoon,18,0.0,High,2.0,14.11,14.11,coarse
+,accident,True,evening,5,0.0,High,1.0,49.69,49.69,coarse
+,accident,True,morning,41,0.0,High,9.0,31.5,34.2,coarse
+,accident,True,night,34,0.0588,High,19.0,52.85,52.75,coarse
+,congestion,False,afternoon,8,0.125,High,3.0,66.09,70.37,coarse
+,congestion,False,evening,2,0.5,High,,,,coarse
+,congestion,False,morning,73,0.0137,High,12.0,80.88,79.9,coarse
+,congestion,False,night,34,0.0882,Low,5.0,60.08,42.64,coarse
+,congestion,True,afternoon,5,0.0,High,,,,coarse
+,congestion,True,morning,9,0.0,High,,,,coarse
+,congestion,True,night,5,0.0,High,2.0,86.84,86.84,coarse
+,construction,False,afternoon,22,0.4091,High,17.0,578.29,322.9,coarse
+,construction,False,evening,7,1.0,Low,5.0,946.24,1.17,coarse
+,construction,False,morning,55,0.2545,High,42.0,2036.52,74.88,coarse
+,construction,False,night,148,0.1351,High,126.0,1521.23,722.98,coarse
+,construction,True,afternoon,13,0.5385,High,6.0,1005.99,331.81,coarse
+,construction,True,evening,5,0.2,High,3.0,415.09,416.46,coarse
+,construction,True,morning,25,0.32,High,20.0,955.77,92.15,coarse
+,construction,True,night,66,0.1667,High,57.0,3207.27,724.12,coarse
+,debris,False,morning,1,1.0,High,,,,coarse
+,others,False,afternoon,49,0.102,Low,21.0,199.26,36.41,coarse
+,others,False,evening,7,0.0,High,3.0,115.36,32.54,coarse
+,others,False,morning,114,0.1053,High,73.0,138.46,76.25,coarse
+,others,False,night,141,0.0993,High,63.0,211.16,83.99,coarse
+,others,True,afternoon,27,0.1111,High,17.0,304.88,75.94,coarse
+,others,True,evening,4,0.5,High,1.0,1.61,1.61,coarse
+,others,True,morning,50,0.06,High,26.0,133.72,61.45,coarse
+,others,True,night,63,0.0635,High,36.0,211.34,77.51,coarse
+,pot_holes,False,afternoon,21,0.0476,High,3.0,456.32,9.08,coarse
+,pot_holes,False,morning,51,0.0588,High,5.0,834.43,1197.58,coarse
+,pot_holes,False,night,119,0.0168,Low,17.0,175.28,16.41,coarse
+,pot_holes,True,afternoon,22,0.0455,High,,,,coarse
+,pot_holes,True,evening,1,1.0,High,1.0,285.07,285.07,coarse
+,pot_holes,True,morning,97,0.0206,High,3.0,159.47,103.52,coarse
+,pot_holes,True,night,82,0.0,High,4.0,387.93,97.08,coarse
+,procession,False,afternoon,7,0.2857,Low,5.0,80.55,59.91,coarse
+,procession,False,morning,28,0.25,Low,15.0,1222.6,59.51,coarse
+,procession,False,night,13,0.3077,Low,9.0,119.5,39.3,coarse
+,procession,True,afternoon,6,0.0,Low,2.0,32.82,32.82,coarse
+,procession,True,morning,2,0.0,Low,,,,coarse
+,procession,True,night,4,0.0,Low,3.0,56.9,84.74,coarse
+,protest,False,afternoon,1,0.0,High,1.0,30.67,30.67,coarse
+,protest,False,morning,4,0.25,High,2.0,13055.03,13055.03,coarse
+,protest,False,night,3,0.3333,Low,2.0,10.46,10.46,coarse
+,protest,True,night,5,0.8,Low,2.0,0.38,0.38,coarse
+,public_event,False,afternoon,7,0.2857,Low,7.0,482.75,113.09,coarse
+,public_event,False,morning,9,0.3333,High,8.0,3283.4,212.07,coarse
+,public_event,False,night,6,0.1667,High,6.0,1084.61,133.68,coarse
+,public_event,True,afternoon,3,0.0,Low,3.0,55.19,52.77,coarse
+,public_event,True,evening,5,0.0,High,5.0,403.75,409.17,coarse
+,public_event,True,morning,5,0.2,High,5.0,845.23,239.78,coarse
+,public_event,True,night,4,0.0,High,4.0,1219.43,1027.0,coarse
+,road_conditions,False,afternoon,11,0.2727,Low,4.0,905.46,804.94,coarse
+,road_conditions,False,evening,1,0.0,High,,,,coarse
+,road_conditions,False,morning,25,0.08,High,11.0,447.74,61.0,coarse
+,road_conditions,False,night,46,0.1304,High,11.0,340.22,226.32,coarse
+,road_conditions,True,afternoon,1,0.0,High,,,,coarse
+,road_conditions,True,morning,4,0.0,High,,,,coarse
+,road_conditions,True,night,20,0.15,High,5.0,154.68,175.5,coarse
+,test_demo,False,night,1,0.0,Low,1.0,2.36,2.36,coarse
+,test_demo,True,afternoon,1,0.0,Low,1.0,1.29,1.29,coarse
+,test_demo,True,morning,1,0.0,High,,,,coarse
+,tree_fall,False,afternoon,76,0.3816,Low,34.0,353.31,93.64,coarse
+,tree_fall,False,morning,49,0.3878,High,25.0,333.99,81.06,coarse
+,tree_fall,False,night,38,0.3684,Low,18.0,208.99,91.68,coarse
+,tree_fall,True,afternoon,20,0.45,Low,9.0,284.18,64.03,coarse
+,tree_fall,True,evening,4,0.75,High,3.0,89.81,107.31,coarse
+,tree_fall,True,morning,9,0.4444,Low,3.0,457.59,53.07,coarse
+,tree_fall,True,night,17,0.4118,Low,13.0,159.34,54.21,coarse
+,vehicle_breakdown,False,afternoon,548,0.0456,High,207.0,45.93,36.64,coarse
+,vehicle_breakdown,False,evening,92,0.0435,High,29.0,57.68,58.84,coarse
+,vehicle_breakdown,False,morning,1267,0.0418,High,532.0,51.74,44.59,coarse
+,vehicle_breakdown,False,night,1530,0.0418,High,535.0,50.02,40.3,coarse
+,vehicle_breakdown,True,afternoon,243,0.0329,High,87.0,50.18,34.27,coarse
+,vehicle_breakdown,True,evening,33,0.0909,High,8.0,54.01,48.4,coarse
+,vehicle_breakdown,True,morning,563,0.0284,High,238.0,54.83,39.25,coarse
+,vehicle_breakdown,True,night,603,0.0514,High,202.0,51.17,40.28,coarse
+,vip_movement,False,morning,2,0.0,Low,2.0,20054.86,20054.86,coarse
+,vip_movement,False,night,1,0.0,High,1.0,20.98,20.98,coarse
+,vip_movement,True,night,1,0.0,High,1.0,1.2,1.2,coarse
+,water_logging,False,afternoon,99,0.0303,High,31.0,317.99,81.68,coarse
+,water_logging,False,evening,2,0.0,High,,,,coarse
+,water_logging,False,morning,86,0.1395,High,38.0,325.99,128.22,coarse
+,water_logging,False,night,47,0.0638,High,6.0,94.34,85.7,coarse
+,water_logging,True,afternoon,54,0.1111,High,22.0,344.44,84.06,coarse
+,water_logging,True,morning,11,0.0,High,3.0,232.89,245.2,coarse
+,water_logging,True,night,15,0.0,High,1.0,100.98,100.98,coarse
