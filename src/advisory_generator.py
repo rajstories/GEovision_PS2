@@ -10,20 +10,13 @@ Traffic Police (BTP).
 from datetime import datetime
 from typing import Optional
 import pandas as pd
-from resource_engine import CORRIDOR_DIVERSION_HINTS
 
-# VMS concise alternates mapping
-VMS_ALTS = {
-    "mysore road": "USE KANAKAPURA RD / CHORD RD",
-    "tumkur road": "USE HESARAGHATTA RD / RING RD",
-    "bellary road 1": "USE THANISANDRA RD",
-    "bellary road 2": "USE HENNUR RD",
-    "nh 44": "USE NICE RD",
-    "old madras road": "USE WHITEFIELD RD",
-    "hosur road": "USE BANNERGHATTA RD / SARJAPUR RD",
-    "sarjapur road": "USE CARMELARAM RD",
-    "outer ring road": "EXPECT DELAYS"
-}
+# NOTE: We intentionally do not maintain a table of named alternate routes.
+# The ASTRAM dataset has no road-network/alternate-route data, so prescribing
+# a specific diversion (on a public advisory or VMS board) would rely on
+# outside geographic knowledge not traceable to the provided dataset. The
+# advisory therefore names only the affected corridor (which IS in the data)
+# and advises seeking an alternate route / expecting delays.
 
 def generate_traffic_advisory(
     event_cause: str,
@@ -94,14 +87,13 @@ def generate_traffic_advisory(
         )
 
     # ── Diversion Statement ──────────────────────────────────────────────────
-    hint = None
-    if corridor:
-        hint = CORRIDOR_DIVERSION_HINTS.get(corridor.strip().lower())
-        
-    if hint:
-        diversion_line = f"Diversion Route: {hint}"
-    else:
-        diversion_line = "Diversion Route: No specific alternate route is designated. Commuters are advised to seek alternative roads or expect delays."
+    # No dataset-derived alternate route exists, so we do not name one.
+    diversion_line = (
+        "Diversion Route: No specific alternate route can be derived from the "
+        "available data. Commuters should follow on-ground BTP diversion signage "
+        "and expect delays; officers should consult the BTP Standard Diversion "
+        "Plan for this corridor."
+    )
 
     # ── VMS Signboard text (concise, under 100 characters) ───────────────────
     corr_upper = corridor.upper() if corridor else "ROAD"
@@ -114,12 +106,10 @@ def generate_traffic_advisory(
     else:
         vms_time = f"FROM {planned_start_datetime.strftime('%I:%M%p')}"
 
-    alt_route = "EXPECT DELAYS"
-    if corridor:
-        alt_route = VMS_ALTS.get(corridor.lower().strip(), "EXPECT DELAYS")
-
+    # Keep VMS generic and honest: name the closed corridor (dataset-derived),
+    # but do not prescribe a specific alternate route.
     if rec.barricade_recommended or requires_road_closure:
-        vms_text = f"DIVERSION: {corr_upper} CLOSED {vms_time}. {alt_route}"
+        vms_text = f"DIVERSION: {corr_upper} CLOSED {vms_time}. SEEK ALTERNATE ROUTE"
     else:
         vms_text = f"ALERT: {cause_upper} ON {corr_upper} {vms_time}. EXPECT DELAYS."
         

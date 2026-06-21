@@ -80,20 +80,15 @@ DIVERSION_DISCLAIMER = (
     "police station for real-time alternatives."
 )
 
-# Corridor-specific diversion hints (optional, expand as known).
-# Key: corridor name (case-insensitive match used at runtime).
-# Value: short operational hint for that corridor.
-CORRIDOR_DIVERSION_HINTS: dict[str, str] = {
-    "mysore road":       "Consider Kanakapura Road or Chord Road as parallel alternatives.",
-    "tumkur road":       "Consider Hesaraghatta Road or Ring Road via Nagasandra.",
-    "bellary road 1":    "Consider Thanisandra Road or Old Madras Road via Hebbal flyover.",
-    "bellary road 2":    "Consider Hennur Road or Airport Road inner service lane.",
-    "nh 44":             "Use NICE Road or Bannerghatta Road bypass if applicable.",
-    "old madras road":   "Consider Whitefield Road or Outer Ring Road eastern stretch.",
-    "hosur road":        "Consider Bannerghatta Road or Sarjapur Road as alternates.",
-    "sarjapur road":     "Consider Outer Ring Road or Carmelaram Road.",
-    "outer ring road":   "Segment-dependent — consult BTP corridor map for local bypass.",
-}
+# NOTE ON DIVERSION ROUTING (dataset-compliance):
+# We intentionally do NOT hardcode specific alternate-route suggestions.
+# The ASTRAM dataset contains no road-network graph, adjacency, or
+# alternate-route field — only the corridor name of the event itself.
+# Asserting "road X is a viable diversion for road Y" would require outside
+# geographic knowledge not present in the provided data, which this
+# dataset-only submission must avoid. Diversion guidance is therefore limited
+# to the honest disclaimer below, which points officers to BTP's own
+# Standard Diversion Plan for the corridor.
 
 
 # ─── Output dataclass ─────────────────────────────────────────────────────────
@@ -198,23 +193,21 @@ def _resolve_barricade_location(
 
 def _build_diversion_suggestion(corridor: Optional[str]) -> str:
     """
-    Compose a corridor-aware diversion suggestion with an honest disclaimer.
+    Return honest diversion guidance.
 
-    If we have a known corridor with a pre-defined hint, prepend it.
-    Always append the disclaimer about live-network data absence.
+    We deliberately do NOT prescribe specific alternate roads: the ASTRAM
+    dataset has no road-network/alternate-route data, so any concrete
+    diversion route would be outside knowledge not traceable to the data.
+    We return only the disclaimer, which directs officers to BTP's own
+    Standard Diversion Plan for the corridor.
 
     Args:
-        corridor: Named corridor string, or None.
+        corridor: Named corridor string, or None. Accepted for API
+            compatibility; not used to fabricate a route.
 
     Returns:
-        Full diversion suggestion string.
+        The diversion disclaimer string.
     """
-    hint = None
-    if corridor:
-        hint = CORRIDOR_DIVERSION_HINTS.get(corridor.strip().lower())
-
-    if hint:
-        return f"{hint} {DIVERSION_DISCLAIMER}"
     return DIVERSION_DISCLAIMER
 
 
