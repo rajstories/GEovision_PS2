@@ -23,6 +23,7 @@
 - [Our Solution at a Glance](#-our-solution-at-a-glance)
 - [Architecture Overview](#-architecture-overview)
 - [Problem → Solution Mapping](#-problem--solution-mapping)
+- [What Makes This Different (USP)](#-what-makes-this-different-usp)
 - [Key Design Philosophy](#-key-design-philosophy-explainability-over-false-precision)
 - [Model Validation & Benchmarking](#-model-validation--benchmarking)
 - [Tech Stack](#-tech-stack)
@@ -31,6 +32,7 @@
 - [Known Limitations](#-known-limitations)
 - [Future Work](#-future-work)
 - [Dataset Compliance](#-dataset-compliance)
+- [Background & References](#-background--references)
 
 ---
 
@@ -45,6 +47,17 @@ Urban traffic networks face sudden, severe congestion from planned and unplanned
 ## 🎯 Our Solution at a Glance
 
 A pipeline that takes a real BTP traffic-event log, learns how different event types historically behave, and turns that into an interactive, explainable recommendation tool for traffic officers — including a feedback form that records actual outcomes to refine the historical baseline on the next data refresh.
+
+**The idea:** for any upcoming event, answer the three questions an officer actually needs — *How severe will this be? How many people and barricades should I send, and where? What should we tell the public?* — and back every answer with the historical evidence behind it. Concretely, the system:
+
+1. **Cleans** the raw ASTRAM log (type-aware duration caps, drops/flags bad records, logs exactly what was removed).
+2. **Aggregates** events into historical lookups by corridor, cause, time-of-day and weekend.
+3. **Predicts impact** via a 4-tier fallback that always returns a *confidence-labelled* estimate and never silently fails.
+4. **Recommends resources** — officer counts, barricading, diversion guidance — from auditable, editable rules.
+5. **Drafts the advisory** — a publishable BTP-style notice, a beat-level (`police_station`) coordination note, and a short VMS sign-board message.
+6. **Closes the loop** — officers log real outcomes to refine the baseline on the next data refresh.
+
+This is a lightweight, practical implementation of the international **Traffic Impact Analysis → Traffic Management Plan → Post-Event Evaluation** cycle.
 
 <img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/5a30dedd-0cbc-422d-a6a7-af7da43449db" />
 
@@ -71,6 +84,22 @@ A pipeline that takes a real BTP traffic-event log, learns how different event t
 | "Event impact is not quantified in advance" | **Impact Prediction** — 4-tier historical lookup, never silent, always returns a confidence-labeled estimate |
 | "Resource deployment is experience-driven" | **Resource Recommendation + Advisory Generator** — auditable, rule-based personnel/barricade/diversion logic, plus an auto-drafted advisory that replaces the manual, experience-written advisory officers produce today |
 | "No post-event learning system" | **Feedback Loop** — officers log actual outcomes, which are merged into the historical baseline on the next data refresh |
+
+## 💡 What Makes This Different (USP)
+
+Most submissions to a problem like this end up as a generic "ML prediction dashboard." Ours is built to be *adopted* by BTP, and it differs in concrete ways:
+
+- **Explainability over false precision.** Every prediction is backed by *"based on N similar past events"* and a confidence label, so an officer can justify any decision to the public or leadership — something a black-box probability can't do.
+- **Robust on sparse, messy data.** For rare events (e.g. `vip_movement` with a handful of records distorted by administrative-lag closures), it automatically stops trusting volatile duration figures and reasons instead from road-closure likelihood and priority — the signals that stay stable at small sample sizes.
+- **It automates the manual step.** The auto-drafted advisory + VMS message + police-station-level phrasing replace work officers do by hand today, in their own operational format.
+- **Validated honestly.** Benchmarked against a RandomForest on a strict *chronological, leakage-free* split — and we preserved the abandoned heavy-ensemble experiment in [`experiments/`](experiments/), openly documenting why we didn't ship it.
+- **Strictly dataset-compliant.** Uses only the provided ASTRAM dataset — no external APIs, no scraped data, and deliberately no fabricated diversion routes (road-network topology isn't in the data, so we don't invent it).
+
+**Prototype advantages:**
+
+- **Zero infrastructure** — pure Python (pandas + scikit-learn) with a Streamlit UI and flat-file CSV storage. No cloud, no GPU, no API keys; runs on any officer's laptop.
+- **Modular & auditable** — one responsibility per file, config-driven thresholds, clear reasoning at every step.
+- **Adoption-ready framing** — organized around BTP's existing beat / police-station structure, so it augments current workflows instead of replacing them.
 
 ## 🧠 Key Design Philosophy: Explainability over False Precision
 
@@ -201,6 +230,18 @@ python src/feature_engineering.py  # cleaned events -> historical_lookup.csv
 The **shipped pipeline** (`src/` + `app/`) uses **only** the ASTRAM event dataset provided by HackerEarth/BTP for this round. No external datasets, APIs, or scraped data sources are read at any stage. Diversion guidance is intentionally limited to what the dataset supports — we do not hardcode named alternate routes, because road-network topology is not in the data.
 
 > For full transparency: the abandoned experiments in [`experiments/`](experiments/) include a pretrained sentence-embedding model and a placeholder weather feature. These are **not part of the shipped solution** and are excluded precisely because they reach beyond the provided dataset.
+
+## 📚 Background & References
+
+The approach is grounded in how Bengaluru Traffic Police operates today and in established international practice for event traffic management:
+
+- **Bengaluru Traffic Police** — official portal: [btp.gov.in](https://btp.gov.in/)
+- **ASTraM** (BTP's real-time congestion-monitoring platform) — the system our tool *complements*; it monitors live congestion but does not forecast event impact or recommend resources. (See BTP / press coverage of the *ASTraM — Actionable Intelligence for Sustainable Traffic Management* launch.)
+- **Sanchara Spandana** — BTP's decentralized, traffic-station-based beat system, which our `police_station`-level recommendations align with.
+- **US FHWA — Managing Travel for Planned Special Events:** [ops.fhwa.dot.gov/program_areas/sptm.htm](https://ops.fhwa.dot.gov/program_areas/sptm.htm)
+- **US FHWA — Traffic Incident Management:** [ops.fhwa.dot.gov/eto_tim_pse](https://ops.fhwa.dot.gov/eto_tim_pse/)
+
+These informed the **Traffic Impact Analysis → Traffic Management Plan → Post-Event Evaluation** cycle that our pipeline implements in lightweight form.
 
 ---
 
