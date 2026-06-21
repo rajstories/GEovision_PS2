@@ -2,6 +2,20 @@
 
 This document evaluates the ASTRAM event severity prediction models. It compares the **Majority Class Baseline**, the **Existing Rule-Based Fallback System**, and two configurations of the **RandomForestClassifier** (Standard vs Balanced Class Weights) on an identical, chronologically split validation set.
 
+> **Methodology note (read this first).** Two safeguards make these numbers
+> trustworthy, and one caveat keeps them honest:
+> - **Leakage-free, chronological split.** Models are trained on the earliest
+>   80% of events and tested on the most recent 20%. The rule-based system's
+>   historical lookup and the RandomForest's corridor vocabulary are built from
+>   the **training period only**, never the test rows.
+> - **Honest caveat on the ground-truth labels.** The "true" severity label for
+>   each event is produced by applying the system's own severity definition to
+>   that event's *actual* duration and closure outcome. The labels therefore
+>   encode real post-event information the pre-event predictor cannot see (so the
+>   comparison is **not** circular), but the labelling *function* is shared with
+>   the rule-based system and may modestly favour it. This is disclosed rather
+>   than hidden; treat the comparison as indicative, not fully model-agnostic.
+
 ## Dataset and Split Details
 - **Total Rows with Duration**: 2822
 - **Training Set (First 80%)**: 2257 rows (2023-11-09 19:24 to 2024-03-14 01:28)
