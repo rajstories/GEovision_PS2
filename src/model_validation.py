@@ -29,7 +29,6 @@ from impact_model import (
     predict_impact,
     derive_severity_duration_primary,
     derive_severity_closure_priority,
-    LOOKUP_PATH,
     CLEANED_PATH
 )
 from feature_engineering import (
@@ -62,89 +61,94 @@ def main():
     # Filter to has_duration=True rows
     df_dur = df[df["has_duration"] == True].copy()
     print(f"Total rows with duration: {len(df_dur)}")
-    
-    # Load historical lookup for the ground-truth labeling process
-    if not os.path.exists(LOOKUP_PATH):
-        raise FileNotFoundError(f"Historical lookup not found at: {LOOKUP_PATH}")
-    overall_lookup = pd.read_csv(LOOKUP_PATH)
-    
-    # Compute ground-truth labels using the exact severity logic from impact_model.py
-    # applied to actual outcomes.
-    print("Computing ground truth severity labels...")
-    true_severities = []
-    
-    for idx, row in df_dur.iterrows():
-        # Query impact_model to see if the category is high/low reliability in history
-        pred = predict_impact(
-            event_cause=row["event_cause"],
-            planned_start_datetime=row["start_datetime"],
-            corridor=row["corridor"],
-            requires_road_closure=row["requires_road_closure"],
-            lookup_df=overall_lookup,
-            cleaned_df=df
-        )
-        
-        # Substitutue predictions with actual outcomes in the scoring logic
-        if pred.duration_reliability == "high" and pd.notna(row["duration_minutes"]):
-            sev, _, _ = derive_severity_duration_primary(
-                row["duration_minutes"],
-                row["requires_road_closure"]
-            )
-        else:
-            # Low reliability: override with closure/priority-primary logic,
-            # using true outcomes:
-            true_closure_prob = 1.0 if row["requires_road_closure"] else 0.0
-            sev, _, _ = derive_severity_closure_priority(
-                true_closure_prob,
-                row["priority"],
-                row["requires_road_closure"],
-                pred.duration_count
-            )
-        true_severities.append(sev)
-        
-    df_dur["true_severity"] = true_severities
-    
-    # Drop "Unknown" tier rows if any
-    initial_dur_len = len(df_dur)
-    df_dur = df_dur[df_dur["true_severity"] != "Unknown"].copy()
-    dropped_unknown = initial_dur_len - len(df_dur)
-    if dropped_unknown > 0:
-        print(f"Dropped {dropped_unknown} rows with 'Unknown' severity.")
-    
-    # Sort chronologically by start_datetime
+
+    # ── Chronological split FIRST (before any label construction) ──────────────
+    # P1 fix: splitting before we build ground-truth labels lets us construct
+    # those labels using a TRAIN-ONLY historical lookup, so no test-period
+    # statistics leak into the labels. Previously the reliability-tier decision
+    # in labeling used a full-dataset lookup — a second-order leak.
     df_dur = df_dur.sort_values("start_datetime").reset_index(drop=True)
-    
-    # Chronological split (80% train, 20% test)
     total_samples = len(df_dur)
     split_idx = int(total_samples * 0.8)
-    
     train_df = df_dur.iloc[:split_idx].copy()
     test_df = df_dur.iloc[split_idx:].copy()
-    
+
+    # hour_bucket is needed both to build the lookup and as a model feature
+    train_df["hour_bucket"] = train_df["hour_of_day"].apply(assign_hour_bucket)
+    test_df["hour_bucket"] = test_df["hour_of_day"].apply(assign_hour_bucket)
+
+    # ── Build the TRAIN-ONLY historical lookup ─────────────────────────────────
+    # Reused for BOTH ground-truth label construction (the reliability-tier
+    # decision) AND the rule-based system's predictions below. Built from the
+    # training period only — never the test rows.
+    print("Building training-only historical lookup table...")
+    train_lookup = build_lookup_table(train_df)
+
+    # ── Ground-truth severity labels ───────────────────────────────────────────
+    # The label VALUE is derived from each event's ACTUAL outcome (true duration,
+    # true closure, priority). The only lookup-dependent input is the
+    # duration_reliability/tier decision, which we now draw from the train-only
+    # lookup so the labels carry no test-period information.
+    def build_true_severity(frame: pd.DataFrame) -> list:
+        labels = []
+        for _, row in frame.iterrows():
+            pred = predict_impact(
+                event_cause=row["event_cause"],
+                planned_start_datetime=row["start_datetime"],
+                corridor=row["corridor"],
+                requires_road_closure=row["requires_road_closure"],
+                lookup_df=train_lookup,
+                cleaned_df=train_df,
+            )
+            if pred.duration_reliability == "high" and pd.notna(row["duration_minutes"]):
+                sev, _, _ = derive_severity_duration_primary(
+                    row["duration_minutes"],
+                    row["requires_road_closure"],
+                )
+            else:
+                # Low reliability: closure/priority-primary logic, true outcomes
+                true_closure_prob = 1.0 if row["requires_road_closure"] else 0.0
+                sev, _, _ = derive_severity_closure_priority(
+                    true_closure_prob,
+                    row["priority"],
+                    row["requires_road_closure"],
+                    pred.duration_count,
+                )
+            labels.append(sev)
+        return labels
+
+    print("Computing ground truth severity labels (train-only lookup)...")
+    train_df["true_severity"] = build_true_severity(train_df)
+    test_df["true_severity"] = build_true_severity(test_df)
+
+    # Drop "Unknown" tier rows from each fold if any
+    pre_train, pre_test = len(train_df), len(test_df)
+    train_df = train_df[train_df["true_severity"] != "Unknown"].copy()
+    test_df = test_df[test_df["true_severity"] != "Unknown"].copy()
+    dropped_unknown = (pre_train - len(train_df)) + (pre_test - len(test_df))
+    if dropped_unknown > 0:
+        print(f"Dropped {dropped_unknown} rows with 'Unknown' severity.")
+
     start_train_date = train_df["start_datetime"].min()
     end_train_date = train_df["start_datetime"].max()
     start_test_date = test_df["start_datetime"].min()
     end_test_date = test_df["start_datetime"].max()
-    
+
     print(f"Split completed:")
     print(f"  Training set size : {len(train_df)} ({start_train_date} to {end_train_date})")
     print(f"  Testing set size  : {len(test_df)} ({start_test_date} to {end_test_date})")
     print(f"  Date cutoff used  : {end_train_date}")
-    
+
     # ── Feature Engineering (Pre-event known fields only) ───────────────────────
     # Determine top 15 corridors on training set ONLY to prevent leakage
     top_15_corridors = train_df["corridor"].value_counts().index[:15].tolist()
-    
+
     def clean_corridor(c):
         return c if c in top_15_corridors else "Other"
-        
+
     # Map corridors
     train_df["corridor_clean"] = train_df["corridor"].apply(clean_corridor)
     test_df["corridor_clean"] = test_df["corridor"].apply(clean_corridor)
-    
-    # Add hour_bucket
-    train_df["hour_bucket"] = train_df["hour_of_day"].apply(assign_hour_bucket)
-    test_df["hour_bucket"] = test_df["hour_of_day"].apply(assign_hour_bucket)
     
     # Define features
     feature_cols = ["event_cause", "corridor_clean", "hour_bucket", "is_weekend", "requires_road_closure"]
@@ -199,12 +203,8 @@ def main():
     std_med_recall = report_std["Medium"]["recall"]
     bal_med_recall = report_bal["Medium"]["recall"]
     
-    # ── Train-Only Lookup Table for Rule-Based System Evaluation ────────────────
-    # Build a lookup table from the training set only to prevent target/test leakage
-    print("Building training-only historical lookup table for rule-based model evaluation...")
-    train_lookup = build_lookup_table(train_df)
-    
     # ── Evaluate Existing Rule-Based System on Test Set ───────────────────────
+    # Reuses the train-only lookup built earlier (before label construction).
     print("Evaluating existing rule-based system on test set...")
     rule_preds = []
     
@@ -236,19 +236,21 @@ def main():
     report_lines.append("")
     report_lines.append("This document evaluates the ASTRAM event severity prediction models. It compares the **Majority Class Baseline**, the **Existing Rule-Based Fallback System**, and two configurations of the **RandomForestClassifier** (Standard vs Balanced Class Weights) on an identical, chronologically split validation set.")
     report_lines.append("")
-    report_lines.append("> **Methodology note (read this first).** Two safeguards make these numbers")
-    report_lines.append("> trustworthy, and one caveat keeps them honest:")
+    report_lines.append("> **Methodology note (read this first).** Safeguards that make these numbers")
+    report_lines.append("> trustworthy, plus one honest caveat:")
     report_lines.append("> - **Leakage-free, chronological split.** Models are trained on the earliest")
     report_lines.append(">   80% of events and tested on the most recent 20%. The rule-based system's")
     report_lines.append(">   historical lookup and the RandomForest's corridor vocabulary are built from")
     report_lines.append(">   the **training period only**, never the test rows.")
-    report_lines.append("> - **Honest caveat on the ground-truth labels.** The \"true\" severity label for")
-    report_lines.append(">   each event is produced by applying the system's own severity definition to")
-    report_lines.append(">   that event's *actual* duration and closure outcome. The labels therefore")
-    report_lines.append(">   encode real post-event information the pre-event predictor cannot see (so the")
-    report_lines.append(">   comparison is **not** circular), but the labelling *function* is shared with")
-    report_lines.append(">   the rule-based system and may modestly favour it. This is disclosed rather")
-    report_lines.append(">   than hidden; treat the comparison as indicative, not fully model-agnostic.")
+    report_lines.append("> - **Labels are train-only too.** Ground-truth severity labels are derived")
+    report_lines.append(">   from each event's *actual* outcome (true duration, true closure, priority).")
+    report_lines.append(">   The only lookup-dependent input — the duration-reliability tier decision —")
+    report_lines.append(">   is drawn from the **train-only** lookup, so no test-period statistics enter")
+    report_lines.append(">   the labels.")
+    report_lines.append("> - **Honest caveat.** The labelling *function* is the system's own severity")
+    report_lines.append(">   definition applied to real outcomes, so the comparison modestly favours the")
+    report_lines.append(">   rule-based system. We disclose this rather than present it as fully")
+    report_lines.append(">   model-agnostic.")
     report_lines.append("")
 
     report_lines.append("## Dataset and Split Details")

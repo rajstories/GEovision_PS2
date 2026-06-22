@@ -75,7 +75,7 @@ This is a lightweight, practical implementation of the international **Traffic I
 | **Traffic Advisory Generator** | `src/advisory_generator.py` | Auto-drafts a publishable BTP-style advisory, a beat-level (`police_station`) coordination note, and a short VMS-board message — the manual, experience-driven drafting step officers do by hand today |
 | **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory, and reviewing supporting historical evidence |
 | **Feedback Loop** | `src/feedback_loop.py` | Captures real-world outcomes from officers and logs them, to be merged into the historical baseline on the next data refresh |
-| **Model Validation** | `src/model_validation.py` | Benchmarks the rule-based system against a RandomForest classifier on an identical, leakage-free, chronologically-split test set |
+| **Model Validation** | `src/model_validation.py` | Benchmarks the rule-based system against a RandomForest classifier on an identical, chronologically-split test set with all lookups, vocabulary, and labels fit on the training period only |
 
 ## 🔗 Problem → Solution Mapping
 
@@ -92,7 +92,7 @@ Most submissions to a problem like this end up as a generic "ML prediction dashb
 - **Explainability over false precision.** Every prediction is backed by *"based on N similar past events"* and a confidence label, so an officer can justify any decision to the public or leadership — something a black-box probability can't do.
 - **Robust on sparse, messy data.** For rare events (e.g. `vip_movement` with a handful of records distorted by administrative-lag closures), it automatically stops trusting volatile duration figures and reasons instead from road-closure likelihood and priority — the signals that stay stable at small sample sizes.
 - **It automates the manual step.** The auto-drafted advisory + VMS message + police-station-level phrasing replace work officers do by hand today, in their own operational format.
-- **Validated honestly.** Benchmarked against a RandomForest on a strict *chronological, leakage-free* split — and we preserved the abandoned heavy-ensemble experiment in [`experiments/`](experiments/), openly documenting why we didn't ship it.
+- **Validated honestly.** Benchmarked against a RandomForest on a strict *chronological, train-only* split (lookup, vocabulary, and labels all fit on the training period) — and we preserved the abandoned heavy-ensemble experiment in [`experiments/`](experiments/), openly documenting why we didn't ship it.
 - **Strictly dataset-compliant.** Uses only the provided ASTRAM dataset — no external APIs, no scraped data, and deliberately no fabricated diversion routes (road-network topology isn't in the data, so we don't invent it).
 
 **Prototype advantages:**
@@ -122,7 +122,7 @@ In low-sample categories (`cause_only` tier, <5 records), raw duration is often 
 
 ## 📊 Model Validation & Benchmarking
 
-To verify this design choice isn't just philosophy but actually holds up, we benchmarked the rule-based system against a standard ML classifier on an **identical, leakage-free, chronologically split** test set (trained on the earliest 80% of events, tested on the most recent 20% — simulating real forecasting of unseen future events).
+To verify this design choice isn't just philosophy but actually holds up, we benchmarked the rule-based system against a standard ML classifier on an **identical, chronologically split** test set — trained on the earliest 80% of events, tested on the most recent 20% (simulating real forecasting of unseen future events), with every lookup, vocabulary, and label fit on the training period only (see [the leakage discipline below](#why-these-numbers-are-trustworthy-leakage-caught-and-corrected)).
 
 | Model | Accuracy | Macro F1-Score | Notes |
 |---|:---:|:---:|---|
@@ -138,22 +138,27 @@ An earlier high-capacity ensemble we prototyped (now preserved in
 [`experiments/`](experiments/)) evaluated itself with **target leakage** — it
 fit preprocessing on the full dataset before splitting and used a *random*
 split, both of which inflate scores. We caught this and rebuilt the validation
-harness to be leakage-free:
+harness so that everything is fit on the training period only:
 
 - **Chronological split, not random** — train on the earliest 80% of events,
   test on the most recent 20%, so the test set is genuinely "the future."
-- **Train-only lookup tables** — the rule-based system is evaluated using a
-  historical lookup built *only* from the training period, never the test rows.
-- **Train-only corridor vocabulary** — the "top-15 corridors" feature for the
-  RandomForest is learned from the training set alone.
+- **Predictions are train-only** — the rule-based system's historical lookup and
+  the RandomForest's "top-15 corridors" vocabulary are built from the training
+  period alone, never the test rows.
+- **Labels are train-only too** — ground-truth severity labels are derived from
+  each event's *actual* outcome (true duration, true closure status, priority);
+  the one lookup-dependent step in label construction — the duration-reliability
+  tier decision — is also drawn from the **train-only** lookup. (We found this
+  was originally computed from full-dataset statistics — a second-order leak —
+  and corrected it in [`src/model_validation.py`](src/model_validation.py).
+  Re-running after the fix left the headline numbers **unchanged**, confirming
+  the leak was immaterial in practice.)
 
-**Honest caveat:** the severity labels used as ground truth are derived by
-applying the system's own severity definition to each event's *actual* duration
-and closure outcome. They therefore encode real post-event information the
-pre-event predictor cannot see (so the benchmark is not circular), but the
-labelling *function* is shared with the rule-based system, which may modestly
-favour it. We report this openly rather than present the comparison as fully
-model-agnostic.
+**Honest caveat:** the labelling *function* is the system's own severity
+definition applied to real outcomes. So while the labels carry no test-period
+information, the comparison still modestly favours the rule-based system because
+it shares that definition. We report this openly rather than present the
+comparison as fully model-agnostic.
 
 ## 🛠️ Tech Stack
 
