@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, time
+from time import sleep
 import sys
 import os
 
@@ -13,6 +14,88 @@ from impact_model import predict_impact
 from resource_engine import generate_recommendation
 from feedback_loop import log_actual_outcome
 from advisory_generator import generate_traffic_advisory
+
+# Folium is optional: the dashboard still runs without it (the map section
+# degrades to a friendly notice). Both libs are in requirements.txt.
+try:
+    import folium
+    from folium.plugins import HeatMap
+    from streamlit_folium import st_folium
+    _FOLIUM_OK = True
+except Exception:
+    _FOLIUM_OK = False
+
+# Severity-proxy thresholds mirror SEVERITY_CONFIG in src/impact_model.py
+# (used only to colour historical points on the map; the live prediction still
+# uses the real impact_model logic).
+_SEV_LOW_MAX = 50.0
+_SEV_MED_MAX = 120.0
+_SEV_COLORS = {"Low": "#2E7D32", "Medium": "#EF6C00", "High": "#C62828", "Unknown": "#78909C"}
+
+
+def _severity_proxy(minutes) -> str:
+    """Map a historical duration (minutes) to a Low/Medium/High/Unknown tier."""
+    if minutes is None or pd.isna(minutes):
+        return "Unknown"
+    if minutes < _SEV_LOW_MAX:
+        return "Low"
+    if minutes < _SEV_MED_MAX:
+        return "Medium"
+    return "High"
+
+
+def build_incident_map(points_df: pd.DataFrame, marker_cap: int = 300):
+    """
+    Build a Folium map of historical incidents backing a prediction.
+
+    Markers are coloured by a duration-based severity proxy; a heatmap layer
+    shows incident density. Uses only the dataset's own latitude/longitude —
+    no external geographic data is fetched.
+
+    Returns (folium.Map | None, n_plotted).
+    """
+    lat = pd.to_numeric(points_df["latitude"], errors="coerce")
+    lon = pd.to_numeric(points_df["longitude"], errors="coerce")
+    valid = lat.between(12.7, 13.3) & lon.between(77.3, 77.9)
+    pts = points_df.loc[valid].copy()
+    pts["_lat"], pts["_lon"] = lat[valid], lon[valid]
+    if len(pts) == 0:
+        return None, 0
+
+    center = [pts["_lat"].mean(), pts["_lon"].mean()]
+    fmap = folium.Map(location=center, zoom_start=12, tiles="cartodbpositron")
+
+    # Density heatmap over ALL valid points
+    HeatMap(
+        pts[["_lat", "_lon"]].values.tolist(),
+        radius=16, blur=12, min_opacity=0.25, name="Incident density",
+    ).add_to(fmap)
+
+    # Individual markers (capped to the most recent N for responsiveness)
+    if "start_datetime_ist" in pts.columns:
+        pts = pts.sort_values("start_datetime_ist", ascending=False)
+    markers = folium.FeatureGroup(name="Incidents (most recent)")
+    for _, r in pts.head(marker_cap).iterrows():
+        sev = _severity_proxy(r.get("duration_minutes"))
+        color = _SEV_COLORS[sev]
+        dur = r.get("duration_minutes")
+        dur_str = f"{float(dur):.0f} min" if pd.notna(dur) else "unknown"
+        popup_html = (
+            f"<b>{str(r.get('event_cause','')).replace('_',' ').title()}</b><br>"
+            f"Corridor: {r.get('corridor','—')}<br>"
+            f"When: {r.get('start_datetime_ist','—')}<br>"
+            f"Duration: {dur_str} (proxy: {sev})<br>"
+            f"Road closure: {'Yes' if bool(r.get('requires_road_closure')) else 'No'}<br>"
+            f"Station: {r.get('police_station','—')}"
+        )
+        folium.CircleMarker(
+            location=[r["_lat"], r["_lon"]], radius=5, color=color, weight=1,
+            fill=True, fill_color=color, fill_opacity=0.75,
+            popup=folium.Popup(popup_html, max_width=260),
+        ).add_to(markers)
+    markers.add_to(fmap)
+    folium.LayerControl(collapsed=True).add_to(fmap)
+    return fmap, len(pts)
 
 # Page configuration
 st.set_page_config(
@@ -376,9 +459,33 @@ if data_loaded_successfully:
                     disp_df["start_datetime_ist"] = disp_df["start_datetime_ist"].dt.strftime("%Y-%m-%d %H:%M")
                     
                 st.dataframe(disp_df.head(20), use_container_width=True, hide_index=True)
+
+                # ── Geospatial view of the backing evidence ───────────────────
+                st.markdown("#### 🗺️ Incident Map")
+                st.markdown(
+                    "Where these matching incidents occurred — markers coloured by a "
+                    "duration-based severity proxy, plus a density heatmap. This shows "
+                    "*visually* how much historical evidence backs the prediction."
+                )
+                if _FOLIUM_OK:
+                    fmap, n_plotted = build_incident_map(evidence_df)
+                    if fmap is not None:
+                        st.caption(
+                            f"Plotting {n_plotted} geolocated historical incidents "
+                            f"(markers capped to the 300 most recent; heatmap uses all)."
+                        )
+                        st_folium(fmap, use_container_width=True, height=460,
+                                  returned_objects=[], key="evidence_map")
+                    else:
+                        st.info("No geolocated records available to map for this combination.")
+                else:
+                    st.info(
+                        "Map requires `folium` and `streamlit-folium` "
+                        "(`pip install folium streamlit-folium`)."
+                    )
             else:
                 st.info("No matching historical records found for this combination in the cleaned dataset.")
-                
+
         except Exception as e:
             st.warning(f"⚠️ Insufficient data or anomalous input configuration. Could not generate prediction. (Details: {e})")
 
@@ -414,3 +521,84 @@ if data_loaded_successfully:
             requires_road_closure=f_closure
         )
         st.success(f"✅ Recorded. Historical baseline for `{f_cause}` on `{f_corridor_input}` will improve on next data refresh.")
+
+    # ─── LIVE INCIDENT FEED (HISTORICAL REPLAY) ───────────────────────────────
+    st.markdown("---")
+    st.markdown("### 🔴 Live Incident Feed (Replay)")
+    st.markdown(
+        "Replays real historical ASTRAM events in timestamp order at an accelerated "
+        "rate, feeding each one through the **same** `predict_impact → resource_engine` "
+        "pipeline live — a stand-in for a streaming incident feed. This demonstrates the "
+        "*real-time* half of the problem statement using only the provided dataset."
+    )
+
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        replay_speed = st.slider("Simulated hours per real second", 1, 24, 6,
+                                 help="Higher = faster replay. The simulated clock advances "
+                                      "by each event's real time gap, divided by this factor.")
+    with rc2:
+        replay_count = st.slider("Number of recent events to replay", 5, 40, 15)
+
+    if st.button("▶ Start Replay"):
+        try:
+            # Most-recent `replay_count` events, replayed oldest → newest
+            feed_src = cleaned_df.copy()
+            feed_src["_ist"] = pd.to_datetime(feed_src["start_datetime_ist"], errors="coerce")
+            feed_src = (feed_src.dropna(subset=["_ist"])
+                        .sort_values("_ist").tail(replay_count).reset_index(drop=True))
+
+            clock_ph = st.empty()
+            feed_ph = st.empty()
+            progress = st.progress(0)
+            feed_cards: list[str] = []
+            prev_t = None
+
+            for i, row in feed_src.iterrows():
+                t = row["_ist"]
+                corr = None if row["corridor"] == "Non-corridor" else row["corridor"]
+                impact = predict_impact(
+                    event_cause=row["event_cause"],
+                    planned_start_datetime=t.to_pydatetime(),
+                    corridor=corr,
+                    requires_road_closure=bool(row["requires_road_closure"]),
+                    lookup_df=lookup_df,
+                    cleaned_df=cleaned_df,
+                )
+                rec = generate_recommendation(
+                    impact=impact, event_cause=row["event_cause"], corridor=corr,
+                    requires_road_closure=bool(row["requires_road_closure"]),
+                )
+                sev = impact.severity_tier
+                color = _SEV_COLORS.get(sev, "#78909C")
+                card = (
+                    f"<div style='border-left:5px solid {color};background:#f8f9fa;"
+                    f"padding:8px 14px;margin-bottom:6px;border-radius:6px;'>"
+                    f"<span style='color:#6c757d;font-size:12px;'>{t:%Y-%m-%d %H:%M}</span>"
+                    f"&nbsp;·&nbsp;<b>{str(row['event_cause']).replace('_',' ').title()}</b>"
+                    f"&nbsp;on&nbsp;{row['corridor']}<br>"
+                    f"<span style='color:{color};font-weight:600;'>{sev} severity</span>"
+                    f"&nbsp;·&nbsp;{rec.recommended_personnel_count} officers"
+                    f"&nbsp;·&nbsp;barricade: {'Yes' if rec.barricade_recommended else 'No'}"
+                    f"&nbsp;·&nbsp;<span style='color:#868e96;font-size:12px;'>"
+                    f"match: {impact.match_level}</span></div>"
+                )
+                feed_cards.insert(0, card)
+                feed_cards = feed_cards[:8]  # rolling window
+
+                clock_ph.markdown(
+                    f"**🕐 Simulated time:** {t:%Y-%m-%d %H:%M} &nbsp;|&nbsp; "
+                    f"event {i+1} of {len(feed_src)}"
+                )
+                feed_ph.markdown("".join(feed_cards), unsafe_allow_html=True)
+                progress.progress(int((i + 1) / len(feed_src) * 100))
+
+                # Advance the simulated clock; clamp real delay so it's watchable
+                if prev_t is not None:
+                    gap_h = max((t - prev_t).total_seconds() / 3600.0, 0.0)
+                    sleep(min(max(gap_h / replay_speed, 0.05), 1.5))
+                prev_t = t
+
+            st.success("Replay complete — each event was scored live through the production pipeline.")
+        except Exception as e:
+            st.warning(f"⚠️ Replay could not complete. (Details: {e})")

@@ -73,7 +73,7 @@ This is a lightweight, practical implementation of the international **Traffic I
 | **Impact Prediction** | `src/impact_model.py` | Cascades through historical match tiers to estimate event duration and road-closure probability, returning a structured confidence label |
 | **Resource Recommendation** | `src/resource_engine.py` | Converts predicted severity into personnel counts, barricade placement, and diversion guidance, all via editable config tables and rules |
 | **Traffic Advisory Generator** | `src/advisory_generator.py` | Auto-drafts a publishable BTP-style advisory, a beat-level (`police_station`) coordination note, and a short VMS-board message — the manual, experience-driven drafting step officers do by hand today |
-| **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory, and reviewing supporting historical evidence |
+| **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory, reviewing supporting historical evidence on a **geospatial incident map**, and watching a **live incident-feed replay** of historical events scored through the pipeline in real time |
 | **Feedback Loop** | `src/feedback_loop.py` | Captures real-world outcomes from officers and logs them, to be merged into the historical baseline on the next data refresh |
 | **Model Validation** | `src/model_validation.py` | Benchmarks the rule-based system against a RandomForest classifier on an identical, chronologically-split test set with all lookups, vocabulary, and labels fit on the training period only |
 
@@ -240,7 +240,7 @@ python src/feature_engineering.py  # cleaned events -> historical_lookup.csv
 
 ## 🔮 Future Work
 
-- **Live ASTRAM feed integration** — stream active incidents directly from the control room for real-time forecasting
+- **Live ASTRAM feed integration** — the dashboard already includes an accelerated **replay** of historical events streamed through the live `predict_impact → resource_engine` pipeline; the next step is wiring that same path to the real-time control-room feed
 - **Automated feedback retraining** — auto-rebuild the historical lookup tables whenever new feedback entries are logged
 - **Road-network-aware routing** — integrate open routing services (e.g., OSRM) for dynamic, topology-aware diversion plans
 
