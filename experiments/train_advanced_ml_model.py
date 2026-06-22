@@ -50,11 +50,11 @@ CONFIG = {
     "numeric_cols": ["hour_of_day", "day_of_week", "is_weekend"],
     "regression_target": "duration_minutes",
     "classification_target": "requires_road_closure",
-    "n_geo_clusters": 25,
-    "tfidf_max_features": 100,
-    "svd_components": 10,
-    "optuna_trials_regression": 50,
-    "optuna_trials_classification": 50,
+    "n_geo_clusters": 50,
+    "tfidf_max_features": 300,
+    "svd_components": 30,
+    "optuna_trials_regression": 150,
+    "optuna_trials_classification": 150,
 }
 
 def load_data(cfg: dict) -> pd.DataFrame:
