@@ -160,6 +160,18 @@ information, the comparison still modestly favours the rule-based system because
 it shares that definition. We report this openly rather than present the
 comparison as fully model-agnostic.
 
+### Supporting benchmark: binary road-closure prediction
+
+As a *second, narrower* check (**not** the headline, and kept separate from the 3-class severity result above), we benchmarked **closure prediction** — `requires_road_closure`, the actual barricading/manpower trigger — from pre-event features on the same chronological, train-only discipline. Closures are rare (~6.8% of events), so accuracy is misleading and we lead with imbalance-aware metrics:
+
+| Model (test fold) | PR-AUC | Balanced Acc | F1 | Accuracy |
+|---|:---:|:---:|:---:|:---:|
+| Majority (always "no closure") | 0.077 | 0.500 | 0.000 | 0.923 |
+| Cause-rate baseline | 0.235 | 0.700 | **0.391** | 0.884 |
+| RandomForest | **0.240** | 0.676 | 0.347 | 0.870 |
+
+**Honest takeaway:** the RandomForest does **not** clearly beat a simple "predict the historical closure rate for this event cause" baseline — tied on PR-AUC, *lower* on F1. Most of the predictable signal is already in the event cause, which *reinforces* our explainability-first thesis rather than undercutting it. Reproduce with `python src/binary_closure_benchmark.py`; full details in [`docs/binary_closure_benchmark_results.md`](docs/binary_closure_benchmark_results.md).
+
 ## 🛠️ Tech Stack
 
 - **Language:** Python 3.10+
@@ -183,7 +195,8 @@ GEovision_PS2/
 │   ├── resource_engine.py
 │   ├── advisory_generator.py
 │   ├── feedback_loop.py
-│   └── model_validation.py
+│   ├── model_validation.py            # primary 3-class severity benchmark
+│   └── binary_closure_benchmark.py    # supporting binary closure benchmark
 ├── app/
 │   └── dashboard.py
 ├── experiments/                  # Approaches we tried but did NOT ship (see its README)
@@ -192,7 +205,8 @@ GEovision_PS2/
 │   └── save_model.py
 ├── docs/
 │   ├── context.md
-│   └── model_validation_results.md
+│   ├── model_validation_results.md           # primary benchmark results
+│   └── binary_closure_benchmark_results.md   # supporting benchmark results
 ├── requirements.txt
 └── README.md
 ```
