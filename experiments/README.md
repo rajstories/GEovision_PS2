@@ -16,6 +16,26 @@ A much heavier model: XGBoost + LightGBM + CatBoost stacked/voted, with
 sentence-embedding text features, geo-clustering, target encoding, SMOTE, and
 Optuna tuning.
 
+> ⚠️ **NOTE: the "79.62%" figure associated with this experiment (commit
+> `91e10fc`) is NOT a reported result. Do not cite it.**
+> It is a *binary* severe/not-severe classifier
+> (`severe_impact = (requires_road_closure == 1) OR (duration_minutes >= 60)`)
+> — a **different, easier task** from the 3-class severity benchmark — evaluated
+> on a **RANDOM stratified split** with preprocessing (KMeans, target encoding,
+> sentence embeddings) fit on the **full dataset BEFORE splitting**, which is
+> textbook **target leakage**. The binary target is also ~78% negative class, so
+> a trivial "always predict not-severe" classifier already scores ~78%; 79.62%
+> is only ~1.6 percentage points of apparent signal — and on a leaky random
+> split the true lift is likely ~0 or negative. Additionally, of ~7,331 events,
+> ~4,509 have no duration value and are silently labelled "not severe" unless
+> closure is True, injecting heavy false-negative noise into the target itself.
+>
+> The canonical, leakage-free, chronologically validated benchmark is the
+> **3-class severity** task in
+> [`../docs/model_validation_results.md`](../docs/model_validation_results.md)
+> (52.04% accuracy / 0.4906 macro-F1). For a clean *binary* closure benchmark,
+> see [`../docs/binary_closure_benchmark_results.md`](../docs/binary_closure_benchmark_results.md).
+
 **Why we didn't ship it:**
 
 1. **It did not earn its complexity.** On a fair, leakage-free, *chronological*
