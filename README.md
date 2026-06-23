@@ -25,8 +25,32 @@
 
 ---
 
-> ### 💬 One line
-> **GeoVision turns a traffic-event report into a deployment-ready BTP action brief, ranks simultaneous incidents under limited officer/barricade budgets, and sharpens its own predictions from officer-verified outcomes — using only the provided ASTRAM data, validated honestly.**
+## ⚡ 30-Second Judge Brief
+
+> **The problem:** BTP has no way to quantify an event's traffic impact in advance, deployment is purely experience-driven, and nothing is learned after the event ends.
+>
+> **The solution:** GeoVision takes one event report and returns a complete, defensible command decision — forecast → deployment plan → advisory → printable brief → multi-incident resource allocation → and it gets smarter from verified outcomes, live, in-session.
+>
+> **What makes us different:** every number on screen is traceable to real evidence (*"80 past events on this corridor, median 48 min"*) — not a black-box score. And our validation is honest: we caught and threw out our own inflated 79.62% result because it leaked data, and we're showing you the lower, defensible number instead.
+
+| | | |
+|:---:|:---:|:---:|
+| **6** end-to-end modules | **13/13** tests passing | **100%** ASTRAM-only, zero fabricated data |
+
+---
+
+## 📑 Table of Contents
+
+1. [The Problem](#1--the-problem-in-btps-own-words)
+2. [See It In 60 Seconds](#2--see-it-in-60-seconds)
+3. [System Architecture](#3--system-architecture)
+4. [Core Features](#4--core-features)
+5. [Why GeoVision Is Different](#5--why-geovision-is-different)
+6. [Validation Results](#6--validation-results)
+7. [Project Structure](#7--project-structure)
+8. [How To Run](#8--how-to-run)
+9. [Known Limitations](#9--known-limitations-stated-honestly)
+10. [Built On BTP's Real Operating Context](#10--built-on-btps-real-operating-context)
 
 ---
 
@@ -70,6 +94,8 @@ flowchart LR
 4. **Export** — public advisory + VMS message + printable **BTP Action Brief** with sign-off fields
 5. **Allocate** — run the **Budget-Aware Command Queue** across multiple live incidents
 6. **Close the loop** — log a verified outcome and *watch the next prediction change*
+
+> 💡 *Tip for judges: every screen has a "why" attached to it — click into any forecast and you'll see the exact historical evidence behind it, not just a number.*
 
 ---
 
@@ -220,9 +246,9 @@ GEovision_PS2/
 │   ├── feedback_loop.py          # Verified Outcome Refresh
 │   ├── model_validation.py       # 3-class severity benchmark
 │   └── binary_closure_benchmark.py
-├── data/{raw,processed}/         # ASTRAM data (raw never modified)
-├── docs/                         # Validation reports + methodology
-├── tests/                        # 13 regression tests
+├── data/{raw,processed}/          # ASTRAM data (raw never modified)
+├── docs/                          # Validation reports + methodology
+├── tests/                         # 13 regression tests
 └── requirements.txt
 ```
 
@@ -257,7 +283,7 @@ python3 src/feature_engineering.py
 ```
 </details>
 
-No API keys. No GPU. No cloud. Runs on any officer's laptop.
+**No API keys. No GPU. No cloud. Runs on any officer's laptop.**
 
 ---
 
