@@ -8,6 +8,7 @@ dataset files; verified feedback is appended to a separate feedback log and
 combined with cleaned_events.csv only for a derived, refreshed lookup.
 """
 
+import csv
 import hashlib
 import os
 from datetime import datetime
@@ -97,7 +98,26 @@ def read_feedback_log(feedback_log_path: str = FEEDBACK_LOG_PATH) -> pd.DataFram
     if not os.path.exists(feedback_log_path):
         return pd.DataFrame(columns=FEEDBACK_SCHEMA)
 
-    df = pd.read_csv(feedback_log_path)
+    try:
+        df = pd.read_csv(feedback_log_path)
+    except pd.errors.ParserError:
+        # Fallback for mixed-schema files caused by mode="a" appends
+        with open(feedback_log_path, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            try:
+                header = next(reader)
+            except StopIteration:
+                header = []
+            rows = []
+            for row in reader:
+                if not row:
+                    continue
+                # If row matches FEEDBACK_SCHEMA length but header doesn't, it's a newly appended row
+                if len(row) == len(FEEDBACK_SCHEMA) and len(header) != len(FEEDBACK_SCHEMA):
+                    rows.append(dict(zip(FEEDBACK_SCHEMA, row)))
+                else:
+                    rows.append(dict(zip(header, row)))
+        df = pd.DataFrame(rows)
 
     if "actual_requires_road_closure" not in df.columns and "requires_road_closure" in df.columns:
         df["actual_requires_road_closure"] = df["requires_road_closure"]
@@ -179,9 +199,11 @@ def log_actual_outcome(
             return False
 
     df_new = pd.DataFrame([new_record], columns=FEEDBACK_SCHEMA)
-    file_exists = os.path.exists(feedback_log_path)
     os.makedirs(os.path.dirname(feedback_log_path), exist_ok=True)
-    df_new.to_csv(feedback_log_path, mode="a", header=not file_exists, index=False)
+    
+    # Write the entire combined dataframe to ensure schema consistency
+    combined = pd.concat([existing, df_new], ignore_index=True) if len(existing) > 0 else df_new
+    combined.to_csv(feedback_log_path, index=False)
     return True
 
 
