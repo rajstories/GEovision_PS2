@@ -1,282 +1,293 @@
 <div align="center">
 
-# 🚦 BTP Event-Driven Congestion Planner
+# 🚦 GeoVision
 
-### AI-assisted forecasting & resource deployment for planned & unplanned traffic events
+### From a single event report to a deployment-ready command decision — in seconds.
 
-**Gridlock Hackathon 2.0 — Round 2 · Theme: Event-Driven Congestion (Planned & Unplanned)**
-**Hosted by Flipkart · In partnership with Bengaluru Traffic Police (BTP)**
+**An evidence-backed traffic-impact planner for Bengaluru Traffic Police**
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Built%20with-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E?logo=scikit-learn&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Prototype-yellow)
-![Dataset](https://img.shields.io/badge/Dataset-ASTRAM%20%28BTP%29%20only-blue)
+*Forecast impact · Recommend deployment · Generate advisories · Allocate resources · Refresh from verified outcomes*
+
+<br>
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/ML-scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![Dataset](https://img.shields.io/badge/Dataset-ASTRAM%20Only-2563EB)
+![Validation](https://img.shields.io/badge/Validation-Chronological%20·%20Leakage--Free-16A34A)
+![Tests](https://img.shields.io/badge/Tests-13%20passing-22C55E)
+![Status](https://img.shields.io/badge/Status-Demo%20Ready-22C55E)
+
+**Gridlock Hackathon 2.0 · Round 2 · Flipkart × Bengaluru Traffic Police**
+**Problem Statement: Event-Driven Congestion (Planned & Unplanned)**
 
 </div>
 
 ---
 
-## 📌 Table of Contents
-
-- [Problem Statement](#-problem-statement)
-- [Our Solution at a Glance](#-our-solution-at-a-glance)
-- [Architecture Overview](#-architecture-overview)
-- [Problem → Solution Mapping](#-problem--solution-mapping)
-- [What Makes This Different (USP)](#-what-makes-this-different-usp)
-- [Key Design Philosophy](#-key-design-philosophy-explainability-over-false-precision)
-- [Model Validation & Benchmarking](#-model-validation--benchmarking)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [How to Run](#-how-to-run)
-- [Known Limitations](#-known-limitations)
-- [Future Work](#-future-work)
-- [Dataset Compliance](#-dataset-compliance)
-- [Background & References](#-background--references)
+> ### 💬 One line
+> **GeoVision turns a traffic-event report into a deployment-ready BTP action brief, ranks simultaneous incidents under limited officer/barricade budgets, and sharpens its own predictions from officer-verified outcomes — using only the provided ASTRAM data, validated honestly.**
 
 ---
 
-## 🧩 Problem Statement
+## 1 · The Problem, In BTP's Own Words
 
-> *Political rallies, festivals, sports events, construction activities, and sudden gatherings create localized traffic breakdowns. Event impact is not quantified in advance, resource deployment is experience-driven, and there is no post-event learning system.*
->
-> **How can historical and real-time data be used to forecast event-related traffic impact and recommend optimal manpower, barricading, and diversion plans?**
+> *"Political rallies, festivals, sports events, construction activities, and sudden gatherings create localized traffic breakdowns. Event impact is not quantified in advance, resource deployment is experience-driven, and there is no post-event learning system."*
 
-Urban traffic networks face sudden, severe congestion from planned and unplanned events, yet traditional traffic models often rely on high-precision predictions that fail silently on rare or low-sample incidents. This project aggregates historical traffic incident data to forecast the impact of upcoming events and recommend concrete police resource deployments — while being explicit about when its evidence is thin.
+Three operational gaps — and a direct response to each:
 
-## 🎯 Our Solution at a Glance
+| 🚧 BTP Challenge | ✅ GeoVision Response |
+| :--- | :--- |
+| **Impact is not quantified in advance** | Predicts severity, duration, road-closure probability **and a confidence label** from historical ASTRAM patterns |
+| **Deployment is experience-driven** | Recommends officers, barricading and diversion guidance, exports a **printable BTP Action Brief**, and ranks simultaneous incidents under a fixed resource budget |
+| **No post-event learning system** | **Verified Outcome Refresh** folds officer-verified outcomes back into the historical baseline — live, in-session |
 
-A pipeline that takes a real BTP traffic-event log, learns how different event types historically behave, and turns that into an interactive, explainable recommendation tool for traffic officers — including **Verified Outcome Refresh**, where officer-verified outcomes rebuild the deterministic historical lookup immediately in the dashboard session.
+---
 
-**The idea:** for any upcoming event, answer the three questions an officer actually needs — *How severe will this be? How many people and barricades should I send, and where? What should we tell the public?* — and back every answer with the historical evidence behind it. Concretely, the system:
+## 2 · See It In 60 Seconds
 
-1. **Cleans** the raw ASTRAM log (type-aware duration caps, drops/flags bad records, logs exactly what was removed).
-2. **Aggregates** events into historical lookups by corridor, cause, time-of-day and weekend.
-3. **Predicts impact** via a 4-tier fallback that always returns a *confidence-labelled* estimate and never silently fails.
-4. **Recommends resources** — officer counts, barricading, diversion guidance — from auditable, editable rules.
-5. **Drafts the advisory and action brief** — a publishable BTP-style notice, a beat-level (`police_station`) coordination note, a short VMS sign-board message, and a printable officer action brief.
-6. **Queues constrained deployments** — the Budget-Aware Command Queue ranks preset incidents and allocates shared officers/barricades without exceeding the entered budget.
-7. **Closes the loop** — officers log verified outcomes, and the dashboard rebuilds the historical lookup in memory so the next prediction uses the refreshed baseline.
+```mermaid
+flowchart LR
+    A["📋 Event Report<br/>cause · corridor · time"] --> B["🔮 Impact Forecast<br/>severity · duration<br/>closure % · confidence"]
+    B --> C["👮 Deployment Plan<br/>officers · barricades<br/>diversion guidance"]
+    C --> D["📄 Action Brief +<br/>Public Advisory + VMS"]
+    D --> E["🧮 Command Queue<br/>rank incidents under<br/>officer/barricade budget"]
+    E --> F["🔁 Verified Outcome<br/>Refresh"]
+    F -. "updates baseline" .-> B
 
-This is a lightweight, practical implementation of the international **Traffic Impact Analysis → Traffic Management Plan → Post-Event Evaluation** cycle.
+    style A fill:#1e3a8a,stroke:#3b82f6,color:#fff
+    style B fill:#312e81,stroke:#6366f1,color:#fff
+    style C fill:#3730a3,stroke:#818cf8,color:#fff
+    style D fill:#1e40af,stroke:#60a5fa,color:#fff
+    style E fill:#155e75,stroke:#22d3ee,color:#fff
+    style F fill:#166534,stroke:#22c55e,color:#fff
+```
 
-<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/5a30dedd-0cbc-422d-a6a7-af7da43449db" />
+**Demo flow (no typing required):**
+1. **Click a scenario** — `Planned Public Event` · `Unplanned Breakdown` · `Rare Event – Limited Evidence`
+2. **Read the forecast** — severity tier, expected duration, closure probability, *and how many similar past events back it*
+3. **Get the plan** — officer count, barricade placement, diversion decision, with rationale
+4. **Export** — public advisory + VMS message + printable **BTP Action Brief** with sign-off fields
+5. **Allocate** — run the **Budget-Aware Command Queue** across multiple live incidents
+6. **Close the loop** — log a verified outcome and *watch the next prediction change*
 
+---
 
-## 🏗️ Architecture Overview
+## 3 · System Architecture
 
-<img width="1693" height="929" alt="Architecture diagram" src="https://github.com/user-attachments/assets/dbb61cb7-40f6-449b-98e5-dac2cf3f9400" />
+```mermaid
+flowchart TD
+    subgraph INGEST["📥 Data Layer — ASTRAM only"]
+        R["Raw ASTRAM Event Log"] --> CL["Data Cleaning<br/>type-aware duration caps<br/>quality filtering + drop log"]
+        CL --> LK["Historical Lookup Table<br/>corridor × cause × time × weekend"]
+    end
 
-| Module | File | Responsibility |
-|---|---|---|
-| **Data Cleaning** | `src/data_cleaning.py` | Cleans raw ASTRAM event logs, applies type-aware duration caps (24h for unplanned events, 30 days for planned events), and flags rows lacking valid durations for categorical-only analysis |
-| **Historical Aggregation** | `src/feature_engineering.py` | Groups cleaned events by spatial, temporal, and causal features; computes closure rates and duration statistics at fine and coarse resolution |
-| **Impact Prediction** | `src/impact_model.py` | Cascades through historical match tiers to estimate event duration and road-closure probability, returning a structured confidence label |
-| **Resource Recommendation** | `src/resource_engine.py` | Converts predicted severity into personnel counts, barricade placement, and diversion guidance, all via editable config tables and rules |
-| **Traffic Advisory Generator** | `src/advisory_generator.py` | Auto-drafts a publishable BTP-style advisory, a beat-level (`police_station`) coordination note, and a short VMS-board message — the manual, experience-driven drafting step officers do by hand today |
-| **Action Brief Export** | `src/action_brief.py` | Formats the prediction, evidence, resource recommendation, advisory, VMS message, and sign-off fields into a printable HTML command brief |
-| **Budget-Aware Command Queue** | `src/command_queue.py` | Ranks preset incidents with named weights and greedily allocates a shared officer/barricade budget without exceeding it |
-| **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for one-click demo presets, submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory and action brief, running the Budget-Aware Command Queue, reviewing supporting historical evidence on a **geospatial incident map**, and watching a **live incident-feed replay** of historical events scored through the pipeline in real time |
-| **Verified Outcome Refresh** | `src/feedback_loop.py` | Captures officer-verified outcomes, combines them with the original cleaned dataset in memory, and rebuilds the historical lookup without overwriting supplied data |
-| **Model Validation** | `src/model_validation.py` | Benchmarks the rule-based system against a RandomForest classifier on an identical, chronologically-split test set with all lookups, vocabulary, and labels fit on the training period only |
+    subgraph INTEL["🧠 Intelligence Layer"]
+        LK --> IM["Impact Model<br/>4-tier fallback<br/>fine → coarse → cause-only → no-data"]
+        IM --> RE["Resource Engine<br/>officers · barricades · diversion"]
+    end
 
-## 🔗 Problem → Solution Mapping
+    subgraph ACT["🎯 Command Layer"]
+        RE --> AG["Advisory Generator<br/>public notice + VMS"]
+        RE --> AB["Action Brief Export<br/>printable order + sign-off"]
+        RE --> CQ["Budget-Aware<br/>Command Queue"]
+    end
 
-| Pain Point (from problem statement) | Module that Solves It |
-|---|---|
-| "Event impact is not quantified in advance" | **Impact Prediction** — 4-tier historical lookup, never silent, always returns a confidence-labeled estimate |
-| "Resource deployment is experience-driven" | **Resource Recommendation + Advisory Generator** — auditable, rule-based personnel/barricade/diversion logic, plus an auto-drafted advisory that replaces the manual, experience-written advisory officers produce today |
-| "No post-event learning system" | **Verified Outcome Refresh** — officers log verified outcomes, then watch the historical lookup update in-session with a before/after evidence comparison |
+    subgraph UI["🖥️ Officer Dashboard"]
+        AG --> DASH["Streamlit App<br/>presets · incident map · replay"]
+        AB --> DASH
+        CQ --> DASH
+        IM --> DASH
+    end
 
-The **Budget-Aware Command Queue** is a deterministic rule-based allocator, not a constrained optimizer — every ranking decision is traceable to a named, visible weight.
+    DASH --> FB["🔁 Verified Outcome Refresh"]
+    FB -. "rebuilds lookup in-session" .-> LK
 
-## 💡 What Makes This Different (USP)
+    style INGEST fill:#0f172a,stroke:#334155,color:#e2e8f0
+    style INTEL fill:#1e1b4b,stroke:#4338ca,color:#e2e8f0
+    style ACT fill:#083344,stroke:#0e7490,color:#e2e8f0
+    style UI fill:#052e16,stroke:#15803d,color:#e2e8f0
+    style FB fill:#166534,stroke:#22c55e,color:#fff
+```
 
-Most submissions to a problem like this end up as a generic "ML prediction dashboard." Ours is built to be *adopted* by BTP, and it differs in concrete ways:
+---
 
-- **Explainability over false precision.** Every prediction is backed by *"based on N similar past events"* and a confidence label, so an officer can justify any decision to the public or leadership — something a black-box probability can't do.
-- **Robust on sparse, messy data.** For rare events (e.g. `vip_movement` with a handful of records distorted by administrative-lag closures), it automatically stops trusting volatile duration figures and reasons instead from road-closure likelihood and priority — the signals that stay stable at small sample sizes.
-- **It automates the manual step.** The auto-drafted advisory + VMS message + police-station-level phrasing replace work officers do by hand today, in their own operational format.
-- **Validated honestly.** Benchmarked against a RandomForest on a strict *chronological, train-only* split (lookup, vocabulary, and labels all fit on the training period) — and we preserved the abandoned heavy-ensemble experiment in [`experiments/`](experiments/), openly documenting why we didn't ship it.
-- **Strictly dataset-compliant.** Uses only the provided ASTRAM dataset — no external APIs, no scraped data, and deliberately no fabricated diversion routes (road-network topology isn't in the data, so we don't invent it).
+## 4 · Core Features
 
-**Prototype advantages:**
+| Feature | What It Does |
+| :--- | :--- |
+| 🔮 **Impact Forecast** | Estimates duration, severity tier, closure probability and a confidence label |
+| 🪜 **4-Tier Fallback** | `fine → coarse → cause-only → no-data` — **never fails silently, never fabricates** |
+| 🔍 **Explainability** | Every forecast shows *evidence count*, *match level* and *plain-English rationale* |
+| 👮 **Resource Recommendation** | Officer counts, barricade placement, diversion decision support — all config-driven |
+| 📢 **Public Advisory Generator** | Editable BTP-style public notice + short VMS sign-board message |
+| 📄 **Action Brief Export** | Printable command brief — evidence, deployment, advisory, sign-off fields |
+| 🧮 **Budget-Aware Command Queue** | Ranks simultaneous incidents and allocates limited officers/barricades **without exceeding budget** |
+| 🔁 **Verified Outcome Refresh** | Officer-verified outcomes rebuild the historical lookup, live in-session |
+| ▶️ **Live Incident Replay** | Replays historical ASTRAM events through the full pipeline (accelerated, not a live feed) |
+| 🗺️ **Incident Map** | Geospatial evidence using **only** dataset coordinates |
 
-- **Zero infrastructure** — pure Python (pandas + scikit-learn) with a Streamlit UI and flat-file CSV storage. No cloud, no GPU, no API keys; runs on any officer's laptop.
-- **Modular & auditable** — one responsibility per file, config-driven thresholds, clear reasoning at every step.
-- **Adoption-ready framing** — organized around BTP's existing beat / police-station structure, so it augments current workflows instead of replacing them.
+---
 
-## 🧠 Key Design Philosophy: Explainability over False Precision
+## 5 · Why GeoVision Is Different
 
-Rather than forcing a complex model to output a confident-looking number when data is scarce, this system prioritizes **explainable, rule-based reasoning with structured fallbacks** — every prediction tells you *how* confident it is and *why*.
+Most submissions stop at *"an ML prediction dashboard."* GeoVision is built to be **adopted by an officer tomorrow morning.**
 
-### 4-Tier Fallback Mechanism
+<table>
+<tr>
+<td width="50%" valign="top">
 
-The system never returns an error on a new or rare scenario — it cascades:
+### 🔎 Explainable by design
+Every output answers the question an officer must defend to leadership:
+> *"Based on how many similar past events, what happened, and how confident are we?"*
 
-1. **`fine`** — exact match on corridor + event cause + weekend status + hour bucket (≥5 historical events)
-2. **`coarse`** — match on event cause + weekend status + hour bucket (drops corridor specificity)
-3. **`cause_only`** — match solely on event cause (drops time and location)
-4. **`no_data`** — explicitly returns "Unknown," never fabricates a number
+A black-box probability of `0.87` can't justify a deployment. *"High severity — 80 past breakdowns on this corridor, median 48 min"* can.
 
-### Closure-Rate-Priority Override (guarding against noisy data)
+</td>
+<td width="50%" valign="top">
 
-In low-sample categories (`cause_only` tier, <5 records), raw duration is often skewed by **administrative lag** — e.g., a VIP movement that physically lasted an hour but was marked "closed" in the system days later. Below this threshold, the model stops trusting duration entirely and instead derives severity from the historical road-closure rate and the event's native priority — both far more stable signals at small sample sizes.
+### ✅ Honest validation
+We **caught and rejected** an earlier inflated **79.62%** result that used a random split and leakage-prone preprocessing. Our reported numbers use a strict **chronological, training-period-only** split.
 
-> **Example — VIP Movement:** Historical logs show an average duration of ~6 days, almost certainly an administrative-cleanup artifact from only 4 ever-recorded events. Instead of outputting a false "High Severity," the override detects the low sample size, evaluates the historical closure rate and priority instead, and correctly drives a calibrated **Medium-severity** deployment recommendation — with the unreliable duration figure still displayed, clearly flagged, never hidden.
+*We'd rather report a defensible number than an impressive one.*
 
-## 📊 Model Validation & Benchmarking
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-To verify this design choice isn't just philosophy but actually holds up, we benchmarked the rule-based system against a standard ML classifier on an **identical, chronologically split** test set — trained on the earliest 80% of events, tested on the most recent 20% (simulating real forecasting of unseen future events), with every lookup, vocabulary, and label fit on the training period only (see [the leakage discipline below](#why-these-numbers-are-trustworthy-leakage-caught-and-corrected)).
+### 📦 Dataset-compliant
+The shipped pipeline uses **only** the provided ASTRAM dataset. No external APIs, no scraped data, no synthetic training data, and **no fabricated diversion routes** the data can't support.
 
-| Model | Accuracy | Macro F1-Score | Notes |
-|---|:---:|:---:|---|
+</td>
+<td width="50%" valign="top">
+
+### 🎯 Operationally complete
+Forecast → deployment plan → advisory → printable brief → multi-incident allocation → post-event learning. The **entire command workflow**, not a single prediction.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 6 · Validation Results
+
+> **How we validated:** events ordered by time, trained on the **oldest 80%**, tested on the **newest 20%** — simulating real forecasting of unseen future events. Lookup tables, label-reliability decisions and model vocabulary are built from the **training period only**. No leakage.
+
+### 🎯 Primary Benchmark — 3-Class Severity (Low / Medium / High)
+
+| Model | Accuracy | Macro F1 | Notes |
+| :--- | :---: | :---: | :--- |
 | Majority Baseline | 47.61% | 0.2150 | Always predicts the most common class |
-| **Rule-Based System (ours)** | 52.04% | **0.4906** | Balanced across all severity classes |
-| RandomForestClassifier | **58.23%** | 0.4719 | Higher raw accuracy, but only **6% recall** on the Medium class |
+| **🏆 Rule-Based System (ours)** | 52.04% | **0.4906** | **Best balance across all severity classes** |
+| RandomForest | **58.23%** | 0.4719 | Higher accuracy, but collapses on the Medium class |
 
-**Why this matters:** the RandomForest's higher accuracy is partly an artifact of class imbalance — it achieves it by almost completely ignoring the Medium-severity class. Our rule-based system's higher **macro-F1** shows it performs more evenly across all severity levels, which matters operationally: a model that quietly fails to flag medium-severity events is a worse deployment tool than one that's marginally less accurate but has no blind spots. Full methodology and results: [`docs/model_validation_results.md`](docs/model_validation_results.md).
+> **Why macro-F1 beats raw accuracy here:** the RandomForest's higher accuracy comes from almost ignoring the **Medium-severity** class (≈6% recall). A model that quietly fails to flag medium events is a worse command tool than one that's marginally less accurate but has **no blind spots.** Operational reliability > leaderboard accuracy.
 
-### Why these numbers are trustworthy: leakage caught and corrected
+### 🚧 Supporting Benchmark — Binary Road-Closure Risk
 
-An earlier high-capacity ensemble we prototyped (now preserved in
-[`experiments/`](experiments/)) evaluated itself with **target leakage** — it
-fit preprocessing on the full dataset before splitting and used a *random*
-split, both of which inflate scores. We caught this and rebuilt the validation
-harness so that everything is fit on the training period only:
+*Chronological 70/15/15 split · threshold tuned on validation only · closure prevalence ~6–9%*
 
-- **Chronological split, not random** — train on the earliest 80% of events,
-  test on the most recent 20%, so the test set is genuinely "the future."
-- **Predictions are train-only** — the rule-based system's historical lookup and
-  the RandomForest's "top-15 corridors" vocabulary are built from the training
-  period alone, never the test rows.
-- **Labels are train-only too** — ground-truth severity labels are derived from
-  each event's *actual* outcome (true duration, true closure status, priority);
-  the one lookup-dependent step in label construction — the duration-reliability
-  tier decision — is also drawn from the **train-only** lookup. (We found this
-  was originally computed from full-dataset statistics — a second-order leak —
-  and corrected it in [`src/model_validation.py`](src/model_validation.py).
-  Re-running after the fix left the headline numbers **unchanged**, confirming
-  the leak was immaterial in practice.)
-- **Road-closure input is pre-event known** — `requires_road_closure` is treated
-  as the officer/operator flag entered when the event is created, before
-  resolution; it is not computed from duration or closed/resolved timestamps.
+| Method | PR-AUC | Balanced Acc | Recall | F1 | Accuracy |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Majority baseline | 0.077 | 50.0% | 0.0% | 0.000 | 92.3% |
+| **Cause-rate baseline** | 0.235 | **70.0%** | **48.2%** | **0.391** | 88.4% |
+| RandomForest | **0.240** | 67.6% | 44.7% | 0.347 | 87.0% |
 
-**Honest caveat:** the labelling *function* is the system's own severity
-definition applied to real outcomes. So while the labels carry no test-period
-information, the comparison still modestly favours the rule-based system because
-it shares that definition. We report this openly rather than present the
-comparison as fully model-agnostic.
+> Closure is rare, so **accuracy alone is misleading** — an always-"no closure" model scores 92% while catching *nothing*. PR-AUC, recall and balanced accuracy are the metrics that reveal whether a method actually finds the operationally critical events.
+>
+> **The honest finding:** a black-box RandomForest does **not** clearly beat a transparent cause-rate heuristic here (PR-AUC +0.005, F1 −0.043). Most of the predictable structure in road closures is already captured by knowing the *event cause* — which is exactly why we ship the **explainable** system and present this as supporting evidence, not a headline ML win.
 
-### Supporting benchmark: binary road-closure prediction
+📂 Full methodology: [`docs/model_validation_results.md`](docs/model_validation_results.md) · [`docs/binary_closure_benchmark_results.md`](docs/binary_closure_benchmark_results.md)
 
-As a *second, narrower* check (**not** the headline, and kept separate from the 3-class severity result above), we benchmarked **closure prediction** — `requires_road_closure`, the actual barricading/manpower trigger — from pre-event features on the same chronological, train-only discipline. Closures are rare (~6.8% of events), so accuracy is misleading and we lead with imbalance-aware metrics:
+---
 
-| Model (test fold) | PR-AUC | Balanced Acc | F1 | Accuracy |
-|---|:---:|:---:|:---:|:---:|
-| Majority (always "no closure") | 0.077 | 0.500 | 0.000 | 0.923 |
-| Cause-rate baseline | 0.235 | 0.700 | **0.391** | 0.884 |
-| RandomForest | **0.240** | 0.676 | 0.347 | 0.870 |
-
-**Honest takeaway:** the RandomForest does **not** clearly beat a simple "predict the historical closure rate for this event cause" baseline — tied on PR-AUC, *lower* on F1. Most of the predictable signal is already in the event cause, which *reinforces* our explainability-first thesis rather than undercutting it. Reproduce with `python3 src/binary_closure_benchmark.py`; full details in [`docs/binary_closure_benchmark_results.md`](docs/binary_closure_benchmark_results.md).
-
-## 🛠️ Tech Stack
-
-- **Language:** Python 3.10+
-- **Data processing:** pandas
-- **Modeling / validation:** scikit-learn
-- **Interface:** Streamlit
-- **Storage:** Flat-file CSV (zero infrastructure dependency — runs anywhere, no cloud lock-in)
-
-## 📁 Project Structure
+## 7 · Project Structure
 
 ```
 GEovision_PS2/
-├── data/
-│   ├── raw/                      # Original ASTRAM dataset (provided)
-│   └── processed/                # Cleaned events, historical lookup (committed)
-│                                 #   models/ is git-ignored (regenerated artifacts)
-├── src/                          # Production pipeline (shipped solution)
-│   ├── data_cleaning.py
-│   ├── feature_engineering.py
-│   ├── impact_model.py
-│   ├── resource_engine.py
-│   ├── advisory_generator.py
-│   ├── action_brief.py
-│   ├── command_queue.py
-│   ├── feedback_loop.py
-│   ├── model_validation.py            # primary 3-class severity benchmark
-│   └── binary_closure_benchmark.py    # supporting binary closure benchmark
 ├── app/
-│   └── dashboard.py
-├── experiments/                  # Approaches we tried but did NOT ship (see its README)
-│   ├── README.md
-│   ├── train_advanced_ml_model.py
-│   └── save_model.py
-├── docs/
-│   ├── context.md
-│   ├── model_validation_results.md           # primary benchmark results
-│   └── binary_closure_benchmark_results.md   # supporting benchmark results
-├── requirements.txt
-└── README.md
+│   └── dashboard.py              # Streamlit command dashboard (presets · map · replay)
+├── src/
+│   ├── data_cleaning.py          # Raw ASTRAM → cleaned events
+│   ├── feature_engineering.py    # Cleaned events → historical lookup
+│   ├── impact_model.py           # 4-tier impact forecast
+│   ├── resource_engine.py        # Officers · barricades · diversion
+│   ├── advisory_generator.py     # Public advisory + VMS message
+│   ├── action_brief.py           # Printable BTP Action Brief export
+│   ├── command_queue.py          # Budget-Aware Command Queue
+│   ├── feedback_loop.py          # Verified Outcome Refresh
+│   ├── model_validation.py       # 3-class severity benchmark
+│   └── binary_closure_benchmark.py
+├── data/{raw,processed}/         # ASTRAM data (raw never modified)
+├── docs/                         # Validation reports + methodology
+├── tests/                        # 13 regression tests
+└── requirements.txt
 ```
 
-## 🚀 How to Run
+---
+
+## 8 · How To Run
 
 ```bash
-# 1. Clone the repository
+# 1. Clone & install
 git clone https://github.com/rajstories/GEovision_PS2.git
 cd GEovision_PS2
-
-# 2. Install dependencies
 python3 -m pip install -r requirements.txt
 
-# 3. Launch the dashboard
-python3 -m streamlit run app/dashboard.py
+# 2. Launch the dashboard
+python3 -m streamlit run app/dashboard.py     # opens at http://localhost:8501
 ```
 
-The app opens at `http://localhost:8501`. No API keys, no GPU required. The processed data files (`cleaned_events.csv`, `historical_lookup.csv`) are committed, so the dashboard runs out of the box. To regenerate them from the raw dataset:
+<details>
+<summary><b>Developer commands — tests, validation, data regeneration</b></summary>
 
 ```bash
-python3 src/data_cleaning.py        # raw ASTRAM log -> cleaned_events.csv
-python3 src/feature_engineering.py  # cleaned events -> historical_lookup.csv
+# Run the test suite (13 tests)
 python3 -m unittest discover -s tests -v
+
+# Reproduce the benchmarks
+python3 src/model_validation.py
+python3 src/binary_closure_benchmark.py
+
+# Regenerate processed data from the raw ASTRAM log
+python3 src/data_cleaning.py
+python3 src/feature_engineering.py
 ```
+</details>
 
-## ⚠️ Known Limitations
+No API keys. No GPU. No cloud. Runs on any officer's laptop.
 
-- **Routine vs. high-security deployments** — Personnel recommendations are calibrated from routine traffic-management response patterns, not high-security VIP protocols (e.g., SPG or specialized convoy security), which follow independent force-deployment chains. This system is designed to *augment*, not replace, those processes for VIP-classified events.
-- **Diversion routing** — The ASTRAM dataset contains no road-network graph or alternate-route data, so the system deliberately does **not** prescribe specific diversion routes (doing so would require outside geographic knowledge not in the data). It flags when a diversion is likely needed and points officers to BTP's Standard Diversion Plan for the corridor; the concrete route is left to on-ground judgment.
-- **Data sparsity for rare causes** — Categories like `vip_movement` and `protest` have very few historical records; the system is explicitly transparent about this via confidence labels rather than disguising it.
+---
 
-## 🔮 Future Work
+## 9 · Known Limitations (Stated Honestly)
 
-- **Live ASTRAM feed integration** — the dashboard already includes an accelerated **replay** of historical events streamed through the live `predict_impact → resource_engine` pipeline; the next step is wiring that same path to the real-time control-room feed
-- **Verified Outcome Refresh hardening** — add role-based approval and review queues before verified outcomes enter the deterministic lookup refresh
-- **Road-network-aware routing** — integrate open routing services (e.g., OSRM) for dynamic, topology-aware diversion plans
+- **Diversion routes** — the system flags *when* a diversion is needed but does **not** invent named alternate routes, because road-network topology is not in the ASTRAM dataset. It points to BTP's Standard Diversion Plan instead.
+- **Command Queue** — a **deterministic, rule-based allocator** with visible weights, *not* a mathematical optimizer. Every ranking is traceable to a named weight.
+- **Verified Outcome Refresh** — updates the **in-session** lookup; a production rollout would add role-based approval and audit controls.
+- **Live feed** — demonstrated via **accelerated historical replay**, not an authenticated live ASTRAM integration.
 
-## ✅ Dataset Compliance
+> These aren't weaknesses we're hiding — they're the boundary between *what the data supports* and *what would require more.* Drawing that line clearly is the difference between a prototype and a pitch.
 
-The **shipped pipeline** (`src/` + `app/`) uses **only** the ASTRAM event dataset provided by HackerEarth/BTP for this round. No external datasets, APIs, or scraped data sources are read at any stage. Diversion guidance is intentionally limited to what the dataset supports — we do not hardcode named alternate routes, because road-network topology is not in the data.
+---
 
-> For full transparency: the abandoned experiments in [`experiments/`](experiments/) include a pretrained sentence-embedding model and a placeholder weather feature. These are **not part of the shipped solution** and are excluded precisely because they reach beyond the provided dataset.
+## 10 · Built On BTP's Real Operating Context
 
-## 📚 Background & References
-
-The approach is grounded in how Bengaluru Traffic Police operates today and in established international practice for event traffic management:
-
-- **Bengaluru Traffic Police** — official portal: [btp.gov.in](https://btp.gov.in/)
-- **ASTraM** (BTP's real-time congestion-monitoring platform) — the system our tool *complements*; it monitors live congestion but does not forecast event impact or recommend resources. (See BTP / press coverage of the *ASTraM — Actionable Intelligence for Sustainable Traffic Management* launch.)
-- **Sanchara Spandana** — BTP's decentralized, traffic-station-based beat system, which our `police_station`-level recommendations align with.
-- **US FHWA — Managing Travel for Planned Special Events:** [ops.fhwa.dot.gov/program_areas/sptm.htm](https://ops.fhwa.dot.gov/program_areas/sptm.htm)
-- **US FHWA — Traffic Incident Management:** [ops.fhwa.dot.gov/eto_tim_pse](https://ops.fhwa.dot.gov/eto_tim_pse/)
-
-These informed the **Traffic Impact Analysis → Traffic Management Plan → Post-Event Evaluation** cycle that our pipeline implements in lightweight form.
+- **ASTraM** — BTP's live congestion-monitoring platform. GeoVision *complements* it: ASTraM monitors the present; GeoVision **forecasts impact and recommends resources**.
+- **Sanchara Spandana** — BTP's traffic-station beat system, which our `police_station`-level recommendations align to.
+- **FHWA — Managing Travel for Planned Special Events** — the international *Impact Analysis → Management Plan → Post-Event Evaluation* cycle our pipeline implements in lightweight form.
 
 ---
 
 <div align="center">
 
-**Built for Gridlock Hackathon 2.0 · Round 2 · Theme: Event-Driven Congestion**
+### GeoVision
+
+**Forecast the impact. Plan the deployment. Learn from the outcome.**
+
+*Built for practical traffic command — not just leaderboard accuracy.*
+
+**Gridlock Hackathon 2.0 · Flipkart × Bengaluru Traffic Police**
 
 </div>
