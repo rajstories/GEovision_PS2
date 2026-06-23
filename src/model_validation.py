@@ -150,7 +150,11 @@ def main():
     train_df["corridor_clean"] = train_df["corridor"].apply(clean_corridor)
     test_df["corridor_clean"] = test_df["corridor"].apply(clean_corridor)
     
-    # Define features
+    # Define features.
+    # `requires_road_closure` is treated here as an operator-known input at
+    # event-creation time: the officer/operator flags that the reported event
+    # requires road closure before resolution. It is not derived from the
+    # eventual closed/resolved timestamps used to compute duration.
     feature_cols = ["event_cause", "corridor_clean", "hour_bucket", "is_weekend", "requires_road_closure"]
     
     # Format target and features

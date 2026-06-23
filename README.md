@@ -46,7 +46,7 @@ Urban traffic networks face sudden, severe congestion from planned and unplanned
 
 ## 🎯 Our Solution at a Glance
 
-A pipeline that takes a real BTP traffic-event log, learns how different event types historically behave, and turns that into an interactive, explainable recommendation tool for traffic officers — including a feedback form that records actual outcomes to refine the historical baseline on the next data refresh.
+A pipeline that takes a real BTP traffic-event log, learns how different event types historically behave, and turns that into an interactive, explainable recommendation tool for traffic officers — including **Verified Outcome Refresh**, where officer-verified outcomes rebuild the deterministic historical lookup immediately in the dashboard session.
 
 **The idea:** for any upcoming event, answer the three questions an officer actually needs — *How severe will this be? How many people and barricades should I send, and where? What should we tell the public?* — and back every answer with the historical evidence behind it. Concretely, the system:
 
@@ -54,8 +54,9 @@ A pipeline that takes a real BTP traffic-event log, learns how different event t
 2. **Aggregates** events into historical lookups by corridor, cause, time-of-day and weekend.
 3. **Predicts impact** via a 4-tier fallback that always returns a *confidence-labelled* estimate and never silently fails.
 4. **Recommends resources** — officer counts, barricading, diversion guidance — from auditable, editable rules.
-5. **Drafts the advisory** — a publishable BTP-style notice, a beat-level (`police_station`) coordination note, and a short VMS sign-board message.
-6. **Closes the loop** — officers log real outcomes to refine the baseline on the next data refresh.
+5. **Drafts the advisory and action brief** — a publishable BTP-style notice, a beat-level (`police_station`) coordination note, a short VMS sign-board message, and a printable officer action brief.
+6. **Queues constrained deployments** — the Budget-Aware Command Queue ranks preset incidents and allocates shared officers/barricades without exceeding the entered budget.
+7. **Closes the loop** — officers log verified outcomes, and the dashboard rebuilds the historical lookup in memory so the next prediction uses the refreshed baseline.
 
 This is a lightweight, practical implementation of the international **Traffic Impact Analysis → Traffic Management Plan → Post-Event Evaluation** cycle.
 
@@ -73,8 +74,10 @@ This is a lightweight, practical implementation of the international **Traffic I
 | **Impact Prediction** | `src/impact_model.py` | Cascades through historical match tiers to estimate event duration and road-closure probability, returning a structured confidence label |
 | **Resource Recommendation** | `src/resource_engine.py` | Converts predicted severity into personnel counts, barricade placement, and diversion guidance, all via editable config tables and rules |
 | **Traffic Advisory Generator** | `src/advisory_generator.py` | Auto-drafts a publishable BTP-style advisory, a beat-level (`police_station`) coordination note, and a short VMS-board message — the manual, experience-driven drafting step officers do by hand today |
-| **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory, reviewing supporting historical evidence on a **geospatial incident map**, and watching a **live incident-feed replay** of historical events scored through the pipeline in real time |
-| **Feedback Loop** | `src/feedback_loop.py` | Captures real-world outcomes from officers and logs them, to be merged into the historical baseline on the next data refresh |
+| **Action Brief Export** | `src/action_brief.py` | Formats the prediction, evidence, resource recommendation, advisory, VMS message, and sign-off fields into a printable HTML command brief |
+| **Budget-Aware Command Queue** | `src/command_queue.py` | Ranks preset incidents with named weights and greedily allocates a shared officer/barricade budget without exceeding it |
+| **Dashboard** | `app/dashboard.py` | Interactive Streamlit interface for one-click demo presets, submitting events, viewing recommendations, inspecting explainability flags, exporting the draft advisory and action brief, running the Budget-Aware Command Queue, reviewing supporting historical evidence on a **geospatial incident map**, and watching a **live incident-feed replay** of historical events scored through the pipeline in real time |
+| **Verified Outcome Refresh** | `src/feedback_loop.py` | Captures officer-verified outcomes, combines them with the original cleaned dataset in memory, and rebuilds the historical lookup without overwriting supplied data |
 | **Model Validation** | `src/model_validation.py` | Benchmarks the rule-based system against a RandomForest classifier on an identical, chronologically-split test set with all lookups, vocabulary, and labels fit on the training period only |
 
 ## 🔗 Problem → Solution Mapping
@@ -83,7 +86,9 @@ This is a lightweight, practical implementation of the international **Traffic I
 |---|---|
 | "Event impact is not quantified in advance" | **Impact Prediction** — 4-tier historical lookup, never silent, always returns a confidence-labeled estimate |
 | "Resource deployment is experience-driven" | **Resource Recommendation + Advisory Generator** — auditable, rule-based personnel/barricade/diversion logic, plus an auto-drafted advisory that replaces the manual, experience-written advisory officers produce today |
-| "No post-event learning system" | **Feedback Loop** — officers log actual outcomes, which are merged into the historical baseline on the next data refresh |
+| "No post-event learning system" | **Verified Outcome Refresh** — officers log verified outcomes, then watch the historical lookup update in-session with a before/after evidence comparison |
+
+The **Budget-Aware Command Queue** is a deterministic rule-based allocator, not a constrained optimizer — every ranking decision is traceable to a named, visible weight.
 
 ## 💡 What Makes This Different (USP)
 
@@ -153,6 +158,9 @@ harness so that everything is fit on the training period only:
   and corrected it in [`src/model_validation.py`](src/model_validation.py).
   Re-running after the fix left the headline numbers **unchanged**, confirming
   the leak was immaterial in practice.)
+- **Road-closure input is pre-event known** — `requires_road_closure` is treated
+  as the officer/operator flag entered when the event is created, before
+  resolution; it is not computed from duration or closed/resolved timestamps.
 
 **Honest caveat:** the labelling *function* is the system's own severity
 definition applied to real outcomes. So while the labels carry no test-period
@@ -170,7 +178,7 @@ As a *second, narrower* check (**not** the headline, and kept separate from the 
 | Cause-rate baseline | 0.235 | 0.700 | **0.391** | 0.884 |
 | RandomForest | **0.240** | 0.676 | 0.347 | 0.870 |
 
-**Honest takeaway:** the RandomForest does **not** clearly beat a simple "predict the historical closure rate for this event cause" baseline — tied on PR-AUC, *lower* on F1. Most of the predictable signal is already in the event cause, which *reinforces* our explainability-first thesis rather than undercutting it. Reproduce with `python src/binary_closure_benchmark.py`; full details in [`docs/binary_closure_benchmark_results.md`](docs/binary_closure_benchmark_results.md).
+**Honest takeaway:** the RandomForest does **not** clearly beat a simple "predict the historical closure rate for this event cause" baseline — tied on PR-AUC, *lower* on F1. Most of the predictable signal is already in the event cause, which *reinforces* our explainability-first thesis rather than undercutting it. Reproduce with `python3 src/binary_closure_benchmark.py`; full details in [`docs/binary_closure_benchmark_results.md`](docs/binary_closure_benchmark_results.md).
 
 ## 🛠️ Tech Stack
 
@@ -194,6 +202,8 @@ GEovision_PS2/
 │   ├── impact_model.py
 │   ├── resource_engine.py
 │   ├── advisory_generator.py
+│   ├── action_brief.py
+│   ├── command_queue.py
 │   ├── feedback_loop.py
 │   ├── model_validation.py            # primary 3-class severity benchmark
 │   └── binary_closure_benchmark.py    # supporting binary closure benchmark
@@ -219,17 +229,18 @@ git clone https://github.com/rajstories/GEovision_PS2.git
 cd GEovision_PS2
 
 # 2. Install dependencies
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # 3. Launch the dashboard
-streamlit run app/dashboard.py
+python3 -m streamlit run app/dashboard.py
 ```
 
 The app opens at `http://localhost:8501`. No API keys, no GPU required. The processed data files (`cleaned_events.csv`, `historical_lookup.csv`) are committed, so the dashboard runs out of the box. To regenerate them from the raw dataset:
 
 ```bash
-python src/data_cleaning.py        # raw ASTRAM log -> cleaned_events.csv
-python src/feature_engineering.py  # cleaned events -> historical_lookup.csv
+python3 src/data_cleaning.py        # raw ASTRAM log -> cleaned_events.csv
+python3 src/feature_engineering.py  # cleaned events -> historical_lookup.csv
+python3 -m unittest discover -s tests -v
 ```
 
 ## ⚠️ Known Limitations
@@ -241,7 +252,7 @@ python src/feature_engineering.py  # cleaned events -> historical_lookup.csv
 ## 🔮 Future Work
 
 - **Live ASTRAM feed integration** — the dashboard already includes an accelerated **replay** of historical events streamed through the live `predict_impact → resource_engine` pipeline; the next step is wiring that same path to the real-time control-room feed
-- **Automated feedback retraining** — auto-rebuild the historical lookup tables whenever new feedback entries are logged
+- **Verified Outcome Refresh hardening** — add role-based approval and review queues before verified outcomes enter the deterministic lookup refresh
 - **Road-network-aware routing** — integrate open routing services (e.g., OSRM) for dynamic, topology-aware diversion plans
 
 ## ✅ Dataset Compliance
